@@ -1,0 +1,1179 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎬 Film Öneri Sistemi v4.0 - Advanced UI</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        /* Genre Selection Styles */
+        .genre-selection {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            color: white;
+        }
+        .genre-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .genre-item {
+            background: rgba(255,255,255,0.2);
+            padding: 8px 12px;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+        .genre-item:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+        .genre-item.selected {
+            background: rgba(255,255,255,0.4);
+            border-color: white;
+            font-weight: bold;
+        }
+        
+        /* Advanced Recommendation Styles */
+        .recommendation-section {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            padding: 25px;
+            border-radius: 12px;
+            margin: 20px 0;
+            color: white;
+        }
+        .recommendation-options {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+        .rec-option-btn {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 2px solid rgba(255,255,255,0.3);
+            padding: 12px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        .rec-option-btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: scale(1.05);
+        }
+        
+        /* Movie Card Enhanced Styles */
+        .movie-card {
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            border: none;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 15px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            display: inline-block;
+            width: 320px;
+            vertical-align: top;
+        }
+        .movie-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+        }
+        .movie-title {
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+        .movie-info {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 12px;
+        }
+        .movie-score {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+        .similar-btn {
+            background: linear-gradient(45deg, #4ecdc4, #44a08d);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            margin: 5px;
+            transition: all 0.3s ease;
+        }
+        .similar-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        /* Auth and User Styles */
+        .auth-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            color: white;
+        }
+        .user-info {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            color: white;
+        }
+        .auth-forms {
+            display: flex;
+            gap: 25px;
+        }
+        .auth-form {
+            flex: 1;
+            background: rgba(255,255,255,0.1);
+            padding: 25px;
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.9);
+            box-sizing: border-box;
+        }
+        
+        /* Tab Styles */
+        .tabs {
+            display: flex;
+            margin-bottom: 25px;
+            background: rgba(0,0,0,0.1);
+            border-radius: 12px;
+            padding: 5px;
+        }
+        .tab {
+            flex: 1;
+            padding: 15px 20px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            margin: 0;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            color: #666;
+            font-weight: 500;
+        }
+        .tab.active {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Utility Styles */
+        .hidden { display: none; }
+        .loading {
+            text-align: center;
+            color: #666;
+            font-style: italic;
+            padding: 40px;
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 25px;
+            border-radius: 12px;
+            background: rgba(255,255,255,0.8);
+        }
+        .search-section {
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+        }
+        .search-box {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        .search-box input {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .search-box button {
+            padding: 15px 30px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        .search-box button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+        button {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            margin: 8px 5px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        .logout-btn {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            float: right;
+        }
+        .genre-tags {
+            margin-top: 12px;
+        }
+        .genre-tag {
+            display: inline-block;
+            background: linear-gradient(45deg, #4facfe, #00f2fe);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            margin: 2px;
+            font-weight: 500;
+        }
+        .rating-input {
+            margin: 15px 0;
+        }
+        .rating-input select {
+            margin-left: 10px;
+            padding: 8px;
+            border-radius: 8px;
+            border: none;
+            background: #f8f9fa;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎬 Film Öneri Sistemi v4.0 Advanced</h1>
+        
+        <!-- User Authentication Section -->
+        <div id="auth-section" class="auth-section">
+            <div id="login-register-forms" class="auth-forms">
+                <!-- Register Form -->
+                <div class="auth-form">
+                    <h3>📝 Kayıt Ol</h3>
+                    <div class="form-group">
+                        <label>Kullanıcı Adı:</label>
+                        <input type="text" id="reg-username" placeholder="Kullanıcı adınız">
+                    </div>
+                    <div class="form-group">
+                        <label>Email:</label>
+                        <input type="email" id="reg-email" placeholder="email@example.com">
+                    </div>
+                    <div class="form-group">
+                        <label>Şifre:</label>
+                        <input type="password" id="reg-password" placeholder="Güçlü bir şifre">
+                    </div>
+                    <div class="form-group">
+                        <label>Yaş (opsiyonel):</label>
+                        <input type="number" id="reg-age" placeholder="25">
+                    </div>
+                    <div class="form-group">
+                        <label>Cinsiyet (opsiyonel):</label>
+                        <select id="reg-gender">
+                            <option value="">Seçiniz</option>
+                            <option value="M">Erkek</option>
+                            <option value="F">Kadın</option>
+                            <option value="Other">Diğer</option>
+                        </select>
+                    </div>
+                    <button onclick="registerUser()">Kayıt Ol</button>
+                </div>
+                
+                <!-- Login Form -->
+                <div class="auth-form">
+                    <h3>🔐 Giriş Yap</h3>
+                    <div class="form-group">
+                        <label>Kullanıcı Adı:</label>
+                        <input type="text" id="login-username" placeholder="Kullanıcı adınız">
+                    </div>
+                    <div class="form-group">
+                        <label>Şifre:</label>
+                        <input type="password" id="login-password" placeholder="Şifreniz">
+                    </div>
+                    <button onclick="loginUser()">Giriş Yap</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- User Info Section -->
+        <div id="user-info" class="user-info hidden">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <span id="user-welcome">Hoş geldiniz!</span>
+                </div>
+                <button class="logout-btn" onclick="logoutUser()">Çıkış Yap</button>
+            </div>
+        </div>
+
+        <!-- Genre Selection Section -->
+        <div id="genre-selection" class="genre-selection hidden">
+            <h3>🎭 Film Türü Tercihleri</h3>
+            <p>Sevdiğiniz türleri seçin (çoklu seçim mümkün):</p>
+            <div id="genre-grid" class="genre-grid">
+                <!-- Genres will be loaded here -->
+            </div>
+            <button onclick="updateGenrePreferences()" style="margin-top: 15px;">Tercihleri Kaydet</button>
+        </div>
+
+        <!-- Tab Navigation -->
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('dashboard', this)">🏠 Dashboard</button>
+            <button class="tab" onclick="showTab('search', this)">🔍 Film Arama</button>
+            <button class="tab" onclick="showTab('recommendations', this)">🎯 Önerilerim</button>
+            <button class="tab" onclick="showTab('advanced', this)">🚀 Gelişmiş</button>
+            <button class="tab" onclick="showTab('profile', this)">👤 Profilim</button>
+        </div>
+
+        <!-- Dashboard Tab -->
+        <div id="dashboard" class="tab-content active">
+            <div class="section">
+                <h2>🏠 Dashboard</h2>
+                <div id="dashboard-content">
+                    <p>Sisteme giriş yapın veya kayıt olun!</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search Tab -->
+        <div id="search" class="tab-content">
+            <div class="section search-section">
+                <h2>🔍 Film Arama</h2>
+                <div class="search-box">
+                    <input type="text" id="search-input" placeholder="Film adı yazın... (örn: star wars, titanic, batman)">
+                    <button onclick="searchMovies()">Ara</button>
+                </div>
+                <div id="search-results"></div>
+            </div>
+        </div>
+
+        <!-- Recommendations Tab -->
+        <div id="recommendations" class="tab-content">
+            <div class="recommendation-section">
+                <h2>🎯 Film Önerileriniz</h2>
+                <div class="recommendation-options">
+                    <button class="rec-option-btn" onclick="getPersonalRecommendations()">
+                        🤖 Kişisel Öneriler
+                    </button>
+                    <button class="rec-option-btn" onclick="getGenreBasedRecommendations()">
+                        🎭 Tür Bazlı Öneriler
+                    </button>
+                    <button class="rec-option-btn" onclick="getAdvancedRecommendations()">
+                        🚀 Gelişmiş Hybrid
+                    </button>
+                </div>
+                <div id="recommendation-results"></div>
+            </div>
+        </div>
+
+        <!-- Advanced Tab -->
+        <div id="advanced" class="tab-content">
+            <div class="recommendation-section">
+                <h2>🚀 Gelişmiş Özellikler</h2>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+                    <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 12px;">
+                        <h3>🎭 Türe Göre Öneriler</h3>
+                        <div id="genre-selector"></div>
+                        <button onclick="getGenreRecommendations()">Önerileri Getir</button>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 12px;">
+                        <h3>📊 Sistem İstatistikleri</h3>
+                        <div id="system-stats">
+                            <p>🎬 Toplam Film: <span id="total-movies">-</span></p>
+                            <p>🎭 Toplam Tür: <span id="total-genres">-</span></p>
+                            <p>👤 Puanlama Sayınız: <span id="user-ratings">-</span></p>
+                        </div>
+                    </div>
+                </div>
+                <div id="advanced-results"></div>
+            </div>
+        </div>
+
+        <!-- Profile Tab -->
+        <div id="profile" class="tab-content">
+            <div class="section">
+                <h2>👤 Profilim</h2>
+                <div id="profile-content">
+                    <p>Profil bilgilerinizi görmek için giriş yapın.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let currentUser = null;
+        let authToken = null;
+        let allGenres = [];
+        let selectedGenres = [];
+
+        // Initialize
+        window.onload = function() {
+            const savedToken = localStorage.getItem('authToken');
+            const savedUser = localStorage.getItem('currentUser');
+            
+            if (savedToken && savedUser) {
+                authToken = savedToken;
+                currentUser = JSON.parse(savedUser);
+                updateUIForLoggedInUser();
+            }
+            
+            loadGenres();
+        };
+
+        // Load all available genres
+        async function loadGenres() {
+            try {
+                const response = await fetch('http://localhost:8000/genres');
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    allGenres = data.genres;
+                    updateGenreDisplay();
+                    updateAdvancedGenreSelector();
+                    document.getElementById('total-genres').textContent = data.count;
+                }
+            } catch (error) {
+                console.error('Genre yükleme hatası:', error);
+            }
+        }
+
+        // Update genre display
+        function updateGenreDisplay() {
+            const genreGrid = document.getElementById('genre-grid');
+            genreGrid.innerHTML = '';
+            
+            allGenres.forEach(genre => {
+                const genreItem = document.createElement('div');
+                genreItem.className = 'genre-item';
+                genreItem.textContent = genre;
+                genreItem.onclick = () => toggleGenre(genre, genreItem);
+                genreGrid.appendChild(genreItem);
+            });
+        }
+
+        // Toggle genre selection
+        function toggleGenre(genre, element) {
+            if (selectedGenres.includes(genre)) {
+                selectedGenres = selectedGenres.filter(g => g !== genre);
+                element.classList.remove('selected');
+            } else {
+                selectedGenres.push(genre);
+                element.classList.add('selected');
+            }
+        }
+
+        // Update advanced genre selector
+        function updateAdvancedGenreSelector() {
+            const selector = document.getElementById('genre-selector');
+            selector.innerHTML = '<select id="advanced-genre-select" multiple style="width: 100%; height: 120px;">';
+            
+            allGenres.forEach(genre => {
+                selector.innerHTML += `<option value="${genre}">${genre}</option>`;
+            });
+            
+            selector.innerHTML += '</select>';
+        }
+
+        // Tab Navigation
+        function showTab(tabName, clickedButton = null) {
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            document.getElementById(tabName).classList.add('active');
+            if (clickedButton) {
+                clickedButton.classList.add('active');
+            }
+        }
+
+        // User Registration
+        async function registerUser() {
+            const userData = {
+                username: document.getElementById('reg-username').value,
+                email: document.getElementById('reg-email').value,
+                password: document.getElementById('reg-password').value,
+                age: parseInt(document.getElementById('reg-age').value) || null,
+                gender: document.getElementById('reg-gender').value || null,
+                favorite_genres: selectedGenres
+            };
+
+            if (!userData.username || !userData.email || !userData.password) {
+                alert('Lütfen gerekli alanları doldurun!');
+                return;
+            }
+
+            try {
+                const response = await fetch('http://localhost:8000/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(userData)
+                });
+
+                const data = await response.json();
+                if (data.status === 'success') {
+                    alert('Kayıt başarılı! Şimdi giriş yapabilirsiniz.');
+                    clearRegisterForm();
+                } else {
+                    alert('Kayıt hatası: ' + data.detail);
+                }
+            } catch (error) {
+                alert('Kayıt sırasında hata oluştu: ' + error.message);
+            }
+        }
+
+        // User Login
+        async function loginUser() {
+            const loginData = {
+                username: document.getElementById('login-username').value,
+                password: document.getElementById('login-password').value
+            };
+
+            if (!loginData.username || !loginData.password) {
+                alert('Kullanıcı adı ve şifre gerekli!');
+                return;
+            }
+
+            try {
+                const response = await fetch('http://localhost:8000/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(loginData)
+                });
+
+                const data = await response.json();
+                if (data.status === 'success') {
+                    authToken = data.access_token;
+                    currentUser = data.user;
+                    
+                    localStorage.setItem('authToken', authToken);
+                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                    
+                    updateUIForLoggedInUser();
+                    alert('Giriş başarılı!');
+                } else {
+                    alert('Giriş hatası: ' + data.detail);
+                }
+            } catch (error) {
+                alert('Giriş sırasında hata oluştu: ' + error.message);
+            }
+        }
+
+        // Update UI for logged in user
+        function updateUIForLoggedInUser() {
+            document.getElementById('login-register-forms').classList.add('hidden');
+            document.getElementById('user-info').classList.remove('hidden');
+            document.getElementById('genre-selection').classList.remove('hidden');
+            document.getElementById('user-welcome').textContent = 
+                `Hoş geldiniz, ${currentUser.username}! 🎬`;
+            
+            // Set selected genres from user preferences
+            if (currentUser.favorite_genres && currentUser.favorite_genres.length > 0) {
+                selectedGenres = [...currentUser.favorite_genres];
+                updateGenreSelectionDisplay();
+            }
+            
+            loadUserDashboard();
+            loadUserProfile();
+        }
+
+        // Update genre selection display based on user preferences
+        function updateGenreSelectionDisplay() {
+            document.querySelectorAll('.genre-item').forEach(item => {
+                if (selectedGenres.includes(item.textContent)) {
+                    item.classList.add('selected');
+                }
+            });
+        }
+
+        // Update user genre preferences
+        async function updateGenrePreferences() {
+            if (!authToken) return;
+
+            try {
+                const response = await fetch('http://localhost:8000/update-genre-preferences', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({
+                        genres: selectedGenres,
+                        n_recommendations: 10
+                    })
+                });
+
+                const data = await response.json();
+                if (data.status === 'success') {
+                    currentUser.favorite_genres = selectedGenres;
+                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                    alert('Tür tercihleri güncellendi!');
+                }
+            } catch (error) {
+                alert('Tercih güncelleme hatası: ' + error.message);
+            }
+        }
+
+        // Get Advanced Recommendations
+        async function getAdvancedRecommendations() {
+            if (!authToken) {
+                alert('Gelişmiş öneriler için giriş yapmalısınız!');
+                return;
+            }
+
+            const resultsDiv = document.getElementById('recommendation-results');
+            resultsDiv.innerHTML = '<div class="loading">🚀 Gelişmiş hybrid öneriler hesaplanıyor...</div>';
+
+            try {
+                const response = await fetch('http://localhost:8000/advanced-recommendations', {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+
+                const data = await response.json();
+                if (data.status === 'success') {
+                    displayAdvancedRecommendations(data);
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = '❌ Gelişmiş öneriler alınırken hata oluştu!';
+            }
+        }
+
+        // Display Advanced Recommendations
+        function displayAdvancedRecommendations(data) {
+            const resultsDiv = document.getElementById('recommendation-results');
+            resultsDiv.innerHTML = `
+                <h3>🚀 Gelişmiş Hybrid Öneriler</h3>
+                <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                    <p><strong>Metod:</strong> ${data.method}</p>
+                    <p><strong>Favori Türleriniz:</strong> ${data.user_favorite_genres.join(', ') || 'Belirtilmemiş'}</p>
+                    <p><strong>Algoritma Dağılımı:</strong> 
+                       Genre: ${data.breakdown.genre_based_count}, 
+                       Content: ${data.breakdown.content_based_count}, 
+                       Collaborative: ${data.breakdown.collaborative_count}
+                    </p>
+                </div>
+                <div id="advanced-rec-list"></div>
+            `;
+
+            const recList = document.getElementById('advanced-rec-list');
+            data.recommendations.forEach((rec, index) => {
+                const recCard = createEnhancedMovieCard(rec, index + 1, 'hybrid');
+                recList.appendChild(recCard);
+            });
+        }
+
+        // Get Genre Recommendations
+        async function getGenreRecommendations() {
+            const genreSelect = document.getElementById('advanced-genre-select');
+            const selectedGenresArray = Array.from(genreSelect.selectedOptions).map(option => option.value);
+            
+            if (selectedGenresArray.length === 0) {
+                alert('Lütfen en az bir tür seçin!');
+                return;
+            }
+
+            if (!authToken) {
+                alert('Tür bazlı öneriler için giriş yapmalısınız!');
+                return;
+            }
+
+            const resultsDiv = document.getElementById('advanced-results');
+            resultsDiv.innerHTML = '<div class="loading">🎭 Tür bazlı öneriler hazırlanıyor...</div>';
+
+            try {
+                const response = await fetch('http://localhost:8000/genre-recommendations', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({
+                        genres: selectedGenresArray,
+                        n_recommendations: 10
+                    })
+                });
+
+                const data = await response.json();
+                if (data.status === 'success') {
+                    resultsDiv.innerHTML = `
+                        <h3>🎭 ${selectedGenresArray.join(' + ')} Türü Önerileri</h3>
+                        <p><strong>Metod:</strong> ${data.method}</p>
+                        <div id="genre-rec-list"></div>
+                    `;
+
+                    const recList = document.getElementById('genre-rec-list');
+                    data.recommendations.forEach((rec, index) => {
+                        const recCard = createEnhancedMovieCard(rec, index + 1, 'genre');
+                        recList.appendChild(recCard);
+                    });
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = '❌ Tür bazlı öneriler alınırken hata oluştu!';
+            }
+        }
+
+        // Get Similar Movies
+        async function getSimilarMovies(movieId, movieTitle) {
+            if (!authToken) {
+                alert('Benzer filmler için giriş yapmalısınız!');
+                return;
+            }
+
+            try {
+                const response = await fetch(`http://localhost:8000/similar-movies/${movieId}`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+
+                const data = await response.json();
+                if (data.status === 'success') {
+                    showSimilarMoviesModal(data, movieTitle);
+                }
+            } catch (error) {
+                alert('Benzer filmler alınırken hata oluştu!');
+            }
+        }
+
+        // Show Similar Movies Modal (simplified)
+        function showSimilarMoviesModal(data, baseMovieTitle) {
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+                background: rgba(0,0,0,0.8); z-index: 1000; display: flex; 
+                align-items: center; justify-content: center;
+            `;
+            
+            modal.innerHTML = `
+                <div style="background: white; padding: 30px; border-radius: 15px; max-width: 80%; max-height: 80%; overflow-y: auto;">
+                    <h3>🎬 "${baseMovieTitle}" Filmine Benzer Filmler</h3>
+                    <div id="similar-movies-list"></div>
+                    <button onclick="this.parentElement.parentElement.remove()" style="margin-top: 20px;">Kapat</button>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            const similarList = document.getElementById('similar-movies-list');
+            data.recommendations.forEach((rec, index) => {
+                const recCard = createEnhancedMovieCard(rec, index + 1, 'similar');
+                similarList.appendChild(recCard);
+            });
+        }
+
+               // Create Enhanced Movie Card (devam)
+        function createEnhancedMovieCard(movie, index, type) {
+            const movieCard = document.createElement('div');
+            movieCard.className = 'movie-card';
+            
+            let scoreDisplay = '';
+            if (type === 'hybrid') {
+                scoreDisplay = `<div class="movie-score">Hybrid Skor: ${movie.hybrid_score}</div>`;
+            } else if (type === 'genre') {
+                scoreDisplay = `<div class="movie-score">Tür Skoru: ${movie.total_score.toFixed(2)}</div>`;
+            } else if (type === 'similar') {
+                scoreDisplay = `<div class="movie-score">Benzerlik: ${movie.similarity_score.toFixed(2)}</div>`;
+            }
+            
+            movieCard.innerHTML = `
+                <div class="movie-title">${index}. ${movie.title}</div>
+                ${scoreDisplay}
+                <div class="movie-info">
+                    ⭐ ${movie.avg_rating} | 👥 ${movie.popularity} kişi
+                </div>
+                <div class="genre-tags">
+                    ${movie.genres.map(genre => `<span class="genre-tag">${genre}</span>`).join('')}
+                </div>
+                <div style="margin-top: 15px;">
+                    <button class="similar-btn" onclick="getSimilarMovies(${movie.movie_id}, '${movie.title}')">
+                        🔗 Benzer Filmler
+                    </button>
+                </div>
+                <div class="rating-input">
+                    Puanınız: 
+                    <select onchange="rateMovie(${movie.movie_id}, this.value)">
+                        <option value="0">Puanla</option>
+                        <option value="1">1 ⭐</option>
+                        <option value="2">2 ⭐</option>
+                        <option value="3">3 ⭐</option>
+                        <option value="4">4 ⭐</option>
+                        <option value="5">5 ⭐</option>
+                    </select>
+                </div>
+            `;
+            return movieCard;
+        }
+
+        // Rate Movie
+        async function rateMovie(movieId, rating) {
+            if (!authToken) {
+                alert('Film puanlamak için giriş yapmalısınız!');
+                return;
+            }
+
+            if (rating == 0) return;
+
+            try {
+                const response = await fetch('http://localhost:8000/rate-movie', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({
+                        movie_id: parseInt(movieId),
+                        rating: parseFloat(rating)
+                    })
+                });
+
+                const data = await response.json();
+                if (data.status === 'success') {
+                    alert(data.message);
+                    updateUserStats(); // Stats'ları güncelle
+                } else {
+                    alert('Puanlama hatası: ' + data.detail);
+                }
+            } catch (error) {
+                alert('Puanlama sırasında hata oluştu: ' + error.message);
+            }
+        }
+
+        // Get Personal Recommendations (Simple version)
+        async function getPersonalRecommendations() {
+            if (!authToken) {
+                alert('Kişisel öneriler için giriş yapmalısınız!');
+                return;
+            }
+
+            const recommendationsDiv = document.getElementById('recommendation-results');
+            recommendationsDiv.innerHTML = '<div class="loading">🤖 Kişisel önerileriniz hazırlanıyor...</div>';
+
+            try {
+                const response = await fetch('http://localhost:8000/advanced-recommendations', {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+
+                const data = await response.json();
+                if (data.status === 'success') {
+                    recommendationsDiv.innerHTML = `
+                        <h3>🤖 Kişisel Film Önerileriniz</h3>
+                        <p><strong>Size özel ${data.recommendations.length} öneri hazırlandı!</strong></p>
+                        <div id="personal-rec-list"></div>
+                    `;
+
+                    const recList = document.getElementById('personal-rec-list');
+                    data.recommendations.forEach((rec, index) => {
+                        const recCard = createEnhancedMovieCard(rec, index + 1, 'hybrid');
+                        recList.appendChild(recCard);
+                    });
+                } else {
+                    recommendationsDiv.innerHTML = '❌ Öneriler alınırken hata oluştu!';
+                }
+            } catch (error) {
+                recommendationsDiv.innerHTML = '❌ Öneriler alınırken hata oluştu: ' + error.message;
+            }
+        }
+
+        // Get Genre Based Recommendations (for recommendations tab)
+        async function getGenreBasedRecommendations() {
+            if (!authToken) {
+                alert('Tür bazlı öneriler için giriş yapmalısınız!');
+                return;
+            }
+
+            if (!currentUser.favorite_genres || currentUser.favorite_genres.length === 0) {
+                alert('Önce tür tercihlerinizi belirleyin!');
+                showTab('profile');
+                return;
+            }
+
+            const recommendationsDiv = document.getElementById('recommendation-results');
+            recommendationsDiv.innerHTML = '<div class="loading">🎭 Favori türlerinize göre öneriler hazırlanıyor...</div>';
+
+            try {
+                const response = await fetch('http://localhost:8000/genre-recommendations', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({
+                        genres: currentUser.favorite_genres,
+                        n_recommendations: 12
+                    })
+                });
+
+                const data = await response.json();
+                if (data.status === 'success') {
+                    recommendationsDiv.innerHTML = `
+                        <h3>🎭 Favori Türlerinize Özel Öneriler</h3>
+                        <p><strong>Türler:</strong> ${data.requested_genres.join(', ')}</p>
+                        <div id="genre-based-rec-list"></div>
+                    `;
+
+                    const recList = document.getElementById('genre-based-rec-list');
+                    data.recommendations.forEach((rec, index) => {
+                        const recCard = createEnhancedMovieCard(rec, index + 1, 'genre');
+                        recList.appendChild(recCard);
+                    });
+                } else {
+                    recommendationsDiv.innerHTML = '❌ Tür bazlı öneriler alınırken hata oluştu!';
+                }
+            } catch (error) {
+                recommendationsDiv.innerHTML = '❌ Tür bazlı öneriler alınırken hata oluştu: ' + error.message;
+            }
+        }
+
+        // Search Movies
+        async function searchMovies() {
+            const query = document.getElementById('search-input').value.trim();
+            const resultsDiv = document.getElementById('search-results');
+            
+            if (!query) {
+                alert('Lütfen bir film adı yazın!');
+                return;
+            }
+
+            resultsDiv.innerHTML = '<div class="loading">🔄 Aranıyor...</div>';
+            
+            try {
+                const response = await fetch(`http://localhost:8000/search?q=${encodeURIComponent(query)}`);
+                const data = await response.json();
+                
+                resultsDiv.innerHTML = `<h3>🎬 "${query}" için ${data.count} sonuç bulundu:</h3>`;
+                
+                if (data.results.length === 0) {
+                    resultsDiv.innerHTML += '<p>Hiç film bulunamadı. Farklı bir terim deneyin.</p>';
+                    return;
+                }
+                
+                data.results.forEach((movie, index) => {
+                    const movieCard = document.createElement('div');
+                    movieCard.className = 'movie-card';
+                    movieCard.innerHTML = `
+                        <div class="movie-title">${movie.title}</div>
+                        <div class="movie-info">
+                            📅 ${movie.release_date} | ⭐ ${movie.avg_rating} | 👥 ${movie.popularity} kişi
+                        </div>
+                        <div class="genre-tags">
+                            ${movie.genres.map(genre => `<span class="genre-tag">${genre}</span>`).join('')}
+                        </div>
+                        <div class="movie-info" style="margin-top: 10px;">
+                            🔗 <a href="${movie.imdb_url}" target="_blank" style="color: #667eea;">IMDB</a>
+                        </div>
+                        <div style="margin-top: 15px;">
+                            <button class="similar-btn" onclick="getSimilarMovies(${movie.movie_id}, '${movie.title}')">
+                                🔗 Benzer Filmler
+                            </button>
+                        </div>
+                        <div class="rating-input">
+                            Puanınız: 
+                            <select onchange="rateMovie(${movie.movie_id}, this.value)">
+                                <option value="0">Puanla</option>
+                                <option value="1">1 ⭐</option>
+                                <option value="2">2 ⭐</option>
+                                <option value="3">3 ⭐</option>
+                                <option value="4">4 ⭐</option>
+                                <option value="5">5 ⭐</option>
+                            </select>
+                        </div>
+                    `;
+                    resultsDiv.appendChild(movieCard);
+                });
+                
+            } catch (error) {
+                resultsDiv.innerHTML = '❌ Arama sırasında hata oluştu!';
+            }
+        }
+
+        // Load User Dashboard
+        function loadUserDashboard() {
+            const dashboardDiv = document.getElementById('dashboard-content');
+            dashboardDiv.innerHTML = `
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 12px; color: white;">
+                        <h3>👋 Hoş geldiniz, ${currentUser.username}!</h3>
+                        <p>🎬 Film önerilerini keşfetmeye hazır mısınız?</p>
+                    </div>
+                    <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 20px; border-radius: 12px; color: white;">
+                        <h4>📊 İstatistikleriniz</h4>
+                        <p>🎭 Favori türler: ${currentUser.favorite_genres.length > 0 ? currentUser.favorite_genres.join(', ') : 'Henüz belirtilmemiş'}</p>
+                        <p>👤 Yaş: ${currentUser.age || 'Belirtilmemiş'}</p>
+                    </div>
+                    <div style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); padding: 20px; border-radius: 12px; color: white;">
+                        <h4>🚀 Hızlı İşlemler</h4>
+                        <button onclick="showTab('search', null)" style="background: rgba(255,255,255,0.2); margin: 5px;">🔍 Film Ara</button>
+                        <button onclick="getAdvancedRecommendations(); showTab('recommendations', null)" style="background: rgba(255,255,255,0.2); margin: 5px;">🎯 Öneri Al</button>
+                    </div>
+                </div>
+            `;
+            
+            updateUserStats();
+        }
+
+        // Load User Profile
+        function loadUserProfile() {
+            if (!authToken) return;
+            
+            const profileDiv = document.getElementById('profile-content');
+            profileDiv.innerHTML = `
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px;">
+                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 25px; border-radius: 12px; color: white;">
+                        <h3>👤 Profil Bilgileri</h3>
+                        <p><strong>Kullanıcı Adı:</strong> ${currentUser.username}</p>
+                        <p><strong>Email:</strong> ${currentUser.email}</p>
+                        <p><strong>Yaş:</strong> ${currentUser.age || 'Belirtilmemiş'}</p>
+                        <p><strong>Cinsiyet:</strong> ${currentUser.gender || 'Belirtilmemiş'}</p>
+                        <p><strong>Katılım Tarihi:</strong> ${new Date(currentUser.created_at).toLocaleDateString('tr-TR')}</p>
+                    </div>
+                    <div style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); padding: 25px; border-radius: 12px; color: white;">
+                        <h3>🎭 Film Tercihleri</h3>
+                        <p><strong>Favori Türler:</strong></p>
+                        <div style="margin-top: 10px;">
+                            ${currentUser.favorite_genres.length > 0 ? 
+                                currentUser.favorite_genres.map(genre => `<span class="genre-tag">${genre}</span>`).join('') :
+                                '<p>Henüz favori tür belirtilmemiş. Yukarıdaki bölümden seçebilirsiniz.</p>'
+                            }
+                        </div>
+                        <button onclick="showGenreSelection()" style="background: rgba(255,255,255,0.2); margin-top: 15px;">
+                            🔄 Tür Tercihlerini Güncelle
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Update User Stats
+        async function updateUserStats() {
+            try {
+                // Bu kısım gelecekte user stats endpoint'i ile doldurulacak
+                document.getElementById('total-movies').textContent = '1682';
+                document.getElementById('user-ratings').textContent = '0'; // Şimdilik
+            } catch (error) {
+                console.error('Stats güncelleme hatası:', error);
+            }
+        }
+
+        // Show Genre Selection
+        function showGenreSelection() {
+            document.querySelector('.genre-selection').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // User Logout
+        function logoutUser() {
+            authToken = null;
+            currentUser = null;
+            selectedGenres = [];
+            
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('currentUser');
+            
+            document.getElementById('login-register-forms').classList.remove('hidden');
+            document.getElementById('user-info').classList.add('hidden');
+            document.getElementById('genre-selection').classList.add('hidden');
+            
+            clearAllForms();
+            document.getElementById('dashboard-content').innerHTML = '<p>Sisteme giriş yapın veya kayıt olun!</p>';
+            showTab('dashboard');
+        }
+
+        // Clear forms
+        function clearRegisterForm() {
+            document.getElementById('reg-username').value = '';
+            document.getElementById('reg-email').value = '';
+            document.getElementById('reg-password').value = '';
+            document.getElementById('reg-age').value = '';
+            document.getElementById('reg-gender').value = '';
+            selectedGenres = [];
+            updateGenreDisplay();
+        }
+
+        function clearAllForms() {
+            clearRegisterForm();
+            document.getElementById('login-username').value = '';
+            document.getElementById('login-password').value = '';
+        }
+
+        // Enter key support for search
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('search-input');
+            if (searchInput) {
+                searchInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        searchMovies();
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>

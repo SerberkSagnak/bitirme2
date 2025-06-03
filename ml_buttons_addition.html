@@ -1,0 +1,23 @@
+<!-- Mevcut butonların yanına ekle -->
+<div class="ml-section" style="margin: 20px 0; padding: 20px; border: 2px solid #00ff00; border-radius: 10px; background: rgba(0,255,0,0.1);">
+    <h3>🤖 Machine Learning Öneriler</h3>
+    
+    <button id="ml-train-btn" onclick="trainMLModel()" 
+            style="padding: 10px 20px; margin: 5px; background: #ff6b35; color: white; border: none; border-radius: 5px; cursor: pointer;">
+        🤖 ML Modelini Eğit
+    </button>
+    
+    <button id="ml-recommendations-btn" onclick="getMLRecommendations()" 
+            style="padding: 10px 20px; margin: 5px; background: #00ff00; color: black; border: none; border-radius: 5px; cursor: pointer;">
+        🎯 ML Önerileri Al
+    </button>
+    
+    <button id="ml-status-btn" onclick="checkMLStatus()" 
+            style="padding: 10px 20px; margin: 5px; background: #0066cc; color: white; border: none; border-radius: 5px; cursor: pointer;">
+        📊 ML Durumu
+    </button>
+    
+    <div id="ml-results" style="margin-top: 15px; padding: 10px; background: rgba(0,0,0,0.1); border-radius: 5px;">
+        <!-- ML sonuçları burada görünecek -->
+    </div>
+</div>

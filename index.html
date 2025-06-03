@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎬 Film Öneri Sistemi</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        .section {
+            margin-bottom: 40px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .movie-card {
+            display: inline-block;
+            width: 300px;
+            margin: 10px;
+            padding: 15px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+        }
+        .movie-title {
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+        .movie-info {
+            font-size: 0.9em;
+            color: #666;
+        }
+        .rating-input {
+            margin: 5px 0;
+        }
+        .rating-input select {
+            margin-left: 10px;
+            padding: 5px;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        .recommendations {
+            background-color: #e8f5e8;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        .loading {
+            text-align: center;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎬 Film Öneri Sistemi</h1>
+        
+        <!-- Onboarding Filmleri -->
+        <div class="section">
+            <h2>📋 Adım 1: Bu filmlerden birkaçını puanlayın</h2>
+            <button onclick="loadOnboardingMovies()">Filmleri Yükle</button>
+            <div id="onboarding-movies"></div>
+            <button onclick="getRecommendations()" style="background-color: #27ae60;">Öneri Al!</button>
+        </div>
+
+        <!-- Öneriler -->
+        <div class="section">
+            <h2>🎯 Film Önerileriniz</h2>
+            <div id="recommendations"></div>
+        </div>
+    </div>
+
+    <script>
+        let movies = [];
+        let userRatings = {};
+
+        async function loadOnboardingMovies() {
+            const moviesDiv = document.getElementById('onboarding-movies');
+            moviesDiv.innerHTML = '<div class="loading">🔄 Filmler yükleniyor...</div>';
+            
+            try {
+                const response = await fetch('http://localhost:8000/onboarding-movies');
+                const data = await response.json();
+                movies = data.movies;
+                
+                moviesDiv.innerHTML = '';
+                movies.forEach(movie => {
+                    const movieCard = document.createElement('div');
+                    movieCard.className = 'movie-card';
+                    movieCard.innerHTML = `
+                        <div class="movie-title">${movie.title}</div>
+                        <div class="movie-info">
+                            ⭐ ${movie.avg_rating} | 👥 ${movie.popularity} kişi
+                        </div>
+                        <div class="rating-input">
+                            Puanınız: 
+                            <select onchange="rateMovie(${movie.movie_id}, this.value)">
+                                <option value="0">Puanla</option>
+                                <option value="1">1 ⭐</option>
+                                <option value="2">2 ⭐</option>
+                                <option value="3">3 ⭐</option>
+                                <option value="4">4 ⭐</option>
+                                <option value="5">5 ⭐</option>
+                            </select>
+                        </div>
+                    `;
+                    moviesDiv.appendChild(movieCard);
+                });
+            } catch (error) {
+                moviesDiv.innerHTML = '❌ Filmler yüklenirken hata oluştu!';
+            }
+        }
+
+        function rateMovie(movieId, rating) {
+            if (rating > 0) {
+                userRatings[movieId] = parseFloat(rating);
+                console.log('Puanlanan filmler:', userRatings);
+            }
+        }
+
+        async function getRecommendations() {
+            const recommendationsDiv = document.getElementById('recommendations');
+            
+            if (Object.keys(userRatings).length === 0) {
+                alert('Lütfen en az bir film puanlayın!');
+                return;
+            }
+
+            recommendationsDiv.innerHTML = '<div class="loading">🤖 Öneriler hesaplanıyor...</div>';
+            
+            try {
+                const response = await fetch('http://localhost:8000/recommend', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        ratings: userRatings,
+                        n_recommendations: 8
+                    })
+                });
+                
+                const data = await response.json();
+                
+                recommendationsDiv.innerHTML = `
+                    <div class="recommendations">
+                        <h3>🎯 Size Özel ${data.recommendations.length} Film Önerisi</h3>
+                        <p><strong>Durum:</strong> ${data.user_rating_count} film puanladınız | ${data.method}</p>
+                        <div id="rec-list"></div>
+                    </div>
+                `;
+                
+                const recList = document.getElementById('rec-list');
+                data.recommendations.forEach((rec, index) => {
+                    const recCard = document.createElement('div');
+                    recCard.className = 'movie-card';
+                    recCard.innerHTML = `
+                        <div class="movie-title">${index + 1}. ${rec.title}</div>
+                        <div class="movie-info">
+                            🎯 Skor: ${rec.score} | ⭐ ${rec.avg_rating} | 👥 ${rec.popularity}
+                        </div>
+                    `;
+                    recList.appendChild(recCard);
+                });
+                
+            } catch (error) {
+                recommendationsDiv.innerHTML = '❌ Öneriler alınırken hata oluştu!';
+            }
+        }
+    </script>
+</body>
+</html>

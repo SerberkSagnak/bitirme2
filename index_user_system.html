@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎬 Film Öneri Sistemi v3.0 - User System</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        
+        /* User System Styles */
+        .auth-section {
+            background-color: #e3f2fd;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .user-info {
+            background-color: #e8f5e8;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .auth-forms {
+            display: flex;
+            gap: 20px;
+        }
+        .auth-form {
+            flex: 1;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        .hidden {
+            display: none;
+        }
+        
+        /* Existing styles */
+        .section {
+            margin-bottom: 40px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .search-section {
+            background-color: #f8f9fa;
+        }
+        .search-box {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .search-box input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        .search-box button {
+            padding: 12px 20px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .movie-card {
+            display: inline-block;
+            width: 300px;
+            margin: 10px;
+            padding: 15px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+        }
+        .movie-title {
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+        .movie-info {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 10px;
+        }
+        .rating-input {
+            margin: 5px 0;
+        }
+        .rating-input select {
+            margin-left: 10px;
+            padding: 5px;
+        }
+        .search-result {
+            background-color: #e3f2fd;
+            border-left: 4px solid #2196f3;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        .recommendations {
+            background-color: #e8f5e8;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        .loading {
+            text-align: center;
+            color: #666;
+        }
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        .tab {
+            padding: 10px 20px;
+            background-color: #ecf0f1;
+            border: none;
+            cursor: pointer;
+            margin-right: 5px;
+        }
+        .tab.active {
+            background-color: #3498db;
+            color: white;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .logout-btn {
+            background-color: #e74c3c;
+            float: right;
+        }
+        .genre-tags {
+            margin-top: 10px;
+        }
+        .genre-tag {
+            display: inline-block;
+            background-color: #3498db;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            margin: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎬 Film Öneri Sistemi v3.0</h1>
+        
+        <!-- User Authentication Section -->
+        <div id="auth-section" class="auth-section">
+            <div id="login-register-forms" class="auth-forms">
+                <!-- Register Form -->
+                <div class="auth-form">
+                    <h3>📝 Kayıt Ol</h3>
+                    <div class="form-group">
+                        <label>Kullanıcı Adı:</label>
+                        <input type="text" id="reg-username" placeholder="Kullanıcı adınız">
+                    </div>
+                    <div class="form-group">
+                        <label>Email:</label>
+                        <input type="email" id="reg-email" placeholder="email@example.com">
+                    </div>
+                    <div class="form-group">
+                        <label>Şifre:</label>
+                        <input type="password" id="reg-password" placeholder="Güçlü bir şifre">
+                    </div>
+                    <div class="form-group">
+                        <label>Yaş (opsiyonel):</label>
+                        <input type="number" id="reg-age" placeholder="25">
+                    </div>
+                    <div class="form-group">
+                        <label>Cinsiyet (opsiyonel):</label>
+                        <select id="reg-gender">
+                            <option value="">Seçiniz</option>
+                            <option value="M">Erkek</option>
+                            <option value="F">Kadın</option>
+                            <option value="Other">Diğer</option>
+                        </select>
+                    </div>
+                    <button onclick="registerUser()">Kayıt Ol</button>
+                </div>
+                
+                <!-- Login Form -->
+                <div class="auth-form">
+                    <h3>🔐 Giriş Yap</h3>
+                    <div class="form-group">
+                        <label>Kullanıcı Adı:</label>
+                        <input type="text" id="login-username" placeholder="Kullanıcı adınız">
+                    </div>
+                    <div class="form-group">
+                        <label>Şifre:</label>
+                        <input type="password" id="login-password" placeholder="Şifreniz">
+                    </div>
+                    <button onclick="loginUser()">Giriş Yap</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- User Info Section (Hidden by default) -->
+        <div id="user-info" class="user-info hidden">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <span id="user-welcome">Hoş geldiniz!</span>
+                </div>
+                <button class="logout-btn" onclick="logoutUser()">Çıkış Yap</button>
+            </div>
+        </div>
+
+        <!-- Tab Navigation -->
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('dashboard', this)">🏠 Dashboard</button>
+            <button class="tab" onclick="showTab('search', this)">🔍 Film Arama</button>
+            <button class="tab" onclick="showTab('recommendations', this)">🎯 Önerilerim</button>
+            <button class="tab" onclick="showTab('profile', this)">👤 Profilim</button>
+        </div>
+
+        <!-- Dashboard Tab -->
+        <div id="dashboard" class="tab-content active">
+            <div class="section">
+                <h2>🏠 Dashboard</h2>
+                <div id="dashboard-content">
+                    <p>Sisteme giriş yapın veya kayıt olun!</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search Tab -->
+        <div id="search" class="tab-content">
+            <div class="section search-section">
+                <h2>🔍 Film Arama</h2>
+                <div class="search-box">
+                    <input type="text" id="search-input" placeholder="Film adı yazın... (örn: star wars, titanic, batman)">
+                    <button onclick="searchMovies()">Ara</button>
+                </div>
+                <div id="search-results"></div>
+            </div>
+        </div>
+
+        <!-- Recommendations Tab -->
+        <div id="recommendations" class="tab-content">
+            <div class="section">
+                <h2>🎯 Film Önerileriniz</h2>
+                <button onclick="getPersonalRecommendations()">Kişisel Önerilerimi Getir</button>
+                <div id="recommendation-results"></div>
+            </div>
+        </div>
+
+        <!-- Profile Tab -->
+        <div id="profile" class="tab-content">
+            <div class="section">
+                <h2>👤 Profilim</h2>
+                <div id="profile-content">
+                    <p>Profil bilgilerinizi görmek için giriş yapın.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let currentUser = null;
+        let authToken = null;
+
+        // Check if user is already logged in (localStorage)
+        window.onload = function() {
+            const savedToken = localStorage.getItem('authToken');
+            const savedUser = localStorage.getItem('currentUser');
+            
+            if (savedToken && savedUser) {
+                authToken = savedToken;
+                currentUser = JSON.parse(savedUser);
+                updateUIForLoggedInUser();
+            }
+        };
+
+        // Tab Navigation
+        function showTab(tabName, clickedButton = null) {
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            document.getElementById(tabName).classList.add('active');
+            if (clickedButton) {
+                clickedButton.classList.add('active');
+            }
+        }
+
+        // User Registration
+        async function registerUser() {
+            const userData = {
+                username: document.getElementById('reg-username').value,
+                email: document.getElementById('reg-email').value,
+                password: document.getElementById('reg-password').value,
+                age: parseInt(document.getElementById('reg-age').value) || null,
+                gender: document.getElementById('reg-gender').value || null,
+                favorite_genres: [] // Şimdilik boş
+            };
+
+            if (!userData.username || !userData.email || !userData.password) {
+                alert('Lütfen gerekli alanları doldurun!');
+                return;
+            }
+
+            try {
+                const response = await fetch('http://localhost:8000/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(userData)
+                });
+
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    alert('Kayıt başarılı! Şimdi giriş yapabilirsiniz.');
+                    // Form temizle
+                    document.getElementById('reg-username').value = '';
+                    document.getElementById('reg-email').value = '';
+                    document.getElementById('reg-password').value = '';
+                    document.getElementById('reg-age').value = '';
+                    document.getElementById('reg-gender').value = '';
+                } else {
+                    alert('Kayıt hatası: ' + data.detail);
+                }
+            } catch (error) {
+                alert('Kayıt sırasında hata oluştu: ' + error.message);
+            }
+        }
+
+        // User Login
+        async function loginUser() {
+            const loginData = {
+                username: document.getElementById('login-username').value,
+                password: document.getElementById('login-password').value
+            };
+
+            if (!loginData.username || !loginData.password) {
+                alert('Kullanıcı adı ve şifre gerekli!');
+                return;
+            }
+
+            try {
+                const response = await fetch('http://localhost:8000/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(loginData)
+                });
+
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    authToken = data.access_token;
+                    currentUser = data.user;
+                    
+                    // Local storage'a kaydet
+                    localStorage.setItem('authToken', authToken);
+                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                    
+                    updateUIForLoggedInUser();
+                    alert('Giriş başarılı!');
+                } else {
+                    alert('Giriş hatası: ' + data.detail);
+                }
+            } catch (error) {
+                alert('Giriş sırasında hata oluştu: ' + error.message);
+            }
+        }
+
+        // Update UI for logged in user
+        function updateUIForLoggedInUser() {
+            document.getElementById('login-register-forms').classList.add('hidden');
+            document.getElementById('user-info').classList.remove('hidden');
+            document.getElementById('user-welcome').textContent = 
+                `Hoş geldiniz, ${currentUser.username}! 👤`;
+            
+            loadUserDashboard();
+            loadUserProfile();
+        }
+
+        // User Logout
+        function logoutUser() {
+            authToken = null;
+            currentUser = null;
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('currentUser');
+            
+            document.getElementById('login-register-forms').classList.remove('hidden');
+            document.getElementById('user-info').classList.add('hidden');
+            
+            // Form temizle
+            document.getElementById('login-username').value = '';
+            document.getElementById('login-password').value = '';
+            
+            // Dashboard'u temizle
+            document.getElementById('dashboard-content').innerHTML = 
+                '<p>Sisteme giriş yapın veya kayıt olun!</p>';
+            
+            showTab('dashboard');
+        }
+
+        // Load User Dashboard
+        function loadUserDashboard() {
+            const dashboardDiv = document.getElementById('dashboard-content');
+            dashboardDiv.innerHTML = `
+                <h3>👋 Hoş geldiniz, ${currentUser.username}!</h3>
+                <div style="display: flex; gap: 20px; margin: 20px 0;">
+                    <div style="flex: 1; padding: 15px; background-color: #e3f2fd; border-radius: 8px;">
+                        <h4>📊 İstatistikleriniz</h4>
+                        <p>🎬 Favori türler: ${currentUser.favorite_genres.join(', ') || 'Henüz belirtilmemiş'}</p>
+                        <p>👤 Yaş: ${currentUser.age || 'Belirtilmemiş'}</p>
+                    </div>
+                    <div style="flex: 1; padding: 15px; background-color: #e8f5e8; border-radius: 8px;">
+                        <h4>🚀 Hızlı İşlemler</h4>
+                        <button onclick="showTab('search', null)">🔍 Film Ara</button>
+                        <button onclick="getPersonalRecommendations(); showTab('recommendations', null)">🎯 Öneri Al</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Load User Profile
+        function loadUserProfile() {
+            if (!authToken) return;
+            
+            const profileDiv = document.getElementById('profile-content');
+            profileDiv.innerHTML = `
+                <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px;">
+                    <h3>👤 Profil Bilgileri</h3>
+                    <p><strong>Kullanıcı Adı:</strong> ${currentUser.username}</p>
+                    <p><strong>Email:</strong> ${currentUser.email}</p>
+                    <p><strong>Yaş:</strong> ${currentUser.age || 'Belirtilmemiş'}</p>
+                    <p><strong>Cinsiyet:</strong> ${currentUser.gender || 'Belirtilmemiş'}</p>
+                    <p><strong>Favori Türler:</strong> ${currentUser.favorite_genres.join(', ') || 'Henüz belirtilmemiş'}</p>
+                    <p><strong>Katılım Tarihi:</strong> ${new Date(currentUser.created_at).toLocaleDateString('tr-TR')}</p>
+                </div>
+            `;
+        }
+
+        // Rate Movie (with authentication)
+        async function rateMovie(movieId, rating) {
+            if (!authToken) {
+                alert('Film puanlamak için giriş yapmalısınız!');
+                return;
+            }
+
+            if (rating == 0) return;
+
+            try {
+                const response = await fetch('http://localhost:8000/rate-movie', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({
+                        movie_id: parseInt(movieId),
+                        rating: parseFloat(rating)
+                    })
+                });
+
+                const data = await response.json();
+                if (data.status === 'success') {
+                    alert(data.message);
+                } else {
+                    alert('Puanlama hatası: ' + data.detail);
+                }
+            } catch (error) {
+                alert('Puanlama sırasında hata oluştu: ' + error.message);
+            }
+        }
+
+        // Get Personal Recommendations
+        async function getPersonalRecommendations() {
+            if (!authToken) {
+                alert('Kişisel öneriler için giriş yapmalısınız!');
+                return;
+            }
+
+            const recommendationsDiv = document.getElementById('recommendation-results');
+            recommendationsDiv.innerHTML = '<div class="loading">🤖 Kişisel önerileriniz hazırlanıyor...</div>';
+
+            try {
+                const response = await fetch('http://localhost:8000/my-recommendations?n_recommendations=10', {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    recommendationsDiv.innerHTML = `
+                        <div class="recommendations">
+                            <h3>🎯 Size Özel ${data.recommendations.length} Film Önerisi</h3>
+                            <p><strong>Durum:</strong> ${data.user_rating_count} film puanlamışsınız | ${data.method}</p>
+                            <div id="rec-list"></div>
+                        </div>
+                    `;
+
+                    const recList = document.getElementById('rec-list');
+                    data.recommendations.forEach((rec, index) => {
+                        const recCard = document.createElement('div');
+                        recCard.className = 'movie-card';
+                        recCard.innerHTML = `
+                            <div class="movie-title">${index + 1}. ${rec.title}</div>
+                            <div class="movie-info">
+                                🎯 Skor: ${rec.score} | ⭐ ${rec.avg_rating} | 👥 ${rec.popularity}
+                            </div>
+                            <div class="genre-tags">
+                                ${rec.genres.map(genre => `<span class="genre-tag">${genre}</span>`).join('')}
+                            </div>
+                            <div class="rating-input">
+                                Puanınız: 
+                                <select onchange="rateMovie(${rec.movie_id}, this.value)">
+                                    <option value="0">Puanla</option>
+                                    <option value="1">1 ⭐</option>
+                                    <option value="2">2 ⭐</option>
+                                    <option value="3">3 ⭐</option>
+                                    <option value="4">4 ⭐</option>
+                                    <option value="5">5 ⭐</option>
+                                </select>
+                            </div>
+                        `;
+                        recList.appendChild(recCard);
+                    });
+                } else {
+                    recommendationsDiv.innerHTML = '❌ Öneriler alınırken hata oluştu!';
+                }
+            } catch (error) {
+                recommendationsDiv.innerHTML = '❌ Öneriler alınırken hata oluştu: ' + error.message;
+            }
+        }
+
+        // Search Movies (existing function with minor updates)
+        async function searchMovies() {
+            const query = document.getElementById('search-input').value.trim();
+            const resultsDiv = document.getElementById('search-results');
+            
+            if (!query) {
+                alert('Lütfen bir film adı yazın!');
+                return;
+            }
+
+            resultsDiv.innerHTML = '<div class="loading">🔄 Aranıyor...</div>';
+            
+            try {
+                const response = await fetch(`http://localhost:8000/search?q=${encodeURIComponent(query)}`);
+                const data = await response.json();
+                
+                resultsDiv.innerHTML = `<h3>🎬 "${query}" için ${data.count} sonuç bulundu:</h3>`;
+                
+                if (data.results.length === 0) {
+                    resultsDiv.innerHTML += '<p>Hiç film bulunamadı. Farklı bir terim deneyin.</p>';
+                    return;
+                }
+                
+                data.results.forEach(movie => {
+                    const movieCard = document.createElement('div');
+                    movieCard.className = 'movie-card search-result';
+                    movieCard.innerHTML = `
+                        <div class="movie-title">${movie.title}</div>
+                        <div class="movie-info">
+                            📅 ${movie.release_date} | ⭐ ${movie.avg_rating} | 👥 ${movie.popularity} kişi
+                        </div>
+                        <div class="genre-tags">
+                            ${movie.genres.map(genre => `<span class="genre-tag">${genre}</span>`).join('')}
+                        </div>
+                        <div class="movie-info">
+                            🔗 <a href="${movie.imdb_url}" target="_blank">IMDB</a>
+                        </div>
+                        <div class="rating-input">
+                            Puanınız: 
+                            <select onchange="rateMovie(${movie.movie_id}, this.value)">
+                                <option value="0">Puanla</option>
+                                <option value="1">1 ⭐</option>
+                                <option value="2">2 ⭐</option>
+                                <option value="3">3 ⭐</option>
+                                <option value="4">4 ⭐</option>
+                                <option value="5">5 ⭐</option>
+                            </select>
+                        </div>
+                    `;
+                    resultsDiv.appendChild(movieCard);
+                });
+                
+            } catch (error) {
+                resultsDiv.innerHTML = '❌ Arama sırasında hata oluştu!';
+            }
+        }
+
+        // Enter key support for search
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('search-input').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    searchMovies();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
