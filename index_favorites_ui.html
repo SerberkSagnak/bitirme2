@@ -24,9 +24,40 @@
             color: #333;
             margin-bottom: 30px;
             background: linear-gradient(45deg, #667eea, #764ba2);
+            background-clip: text;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
+        
+        /* Genre Selection Styles */
+        .genre-selection {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            color: white;
+        }
+        .genre-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .genre-item {
+            background: rgba(255,255,255,0.2);
+            padding: 8px 12px;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .genre-item:hover {
+    background: rgba(255,255,255,0.3);
+    transform: translateY(-2px);
+}
+
         
         /* Favorite & Watchlist Button Styles */
         .action-buttons {
@@ -421,6 +452,24 @@
             border: none;
             background: #f8f9fa;
         }
+        .similar-btn {
+    background: linear-gradient(45deg, #9b59b6, #8e44ad);
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.9em;
+}
+
+.similar-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 5px 15px rgba(155, 89, 182, 0.4);
+}
         
         /* Heart animation for favorites */
         .heart-animation {
@@ -1300,12 +1349,23 @@
             `;
             
             modal.innerHTML = `
-                <div style="background: white; padding: 30px; border-radius: 15px; max-width: 90%; max-height: 80%; overflow-y: auto;">
-                    <h3>🎬 "${baseMovieTitle}" Filmine Benzer Filmler</h3>
-                    <div id="similar-movies-list"></div>
-                    <button onclick="this.parentElement.parentElement.remove()" style="margin-top: 20px;">Kapat</button>
-                </div>
-            `;
+             <div style="background: white; padding: 30px; border-radius: 15px; max-width: 90%; max-height: 80%; overflow-y: auto; position: relative;">
+            <button onclick="this.parentElement.parentElement.remove()" 
+                style="position: absolute; top: 15px; right: 15px; background: #ff6b6b; color: white; border: none; border-radius: 50%; width: 30px; height: 30px; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center;">
+            ×
+            </button>
+            <h3>🎬 "${baseMovieTitle}" Filmine Benzer Filmler</h3>
+            <div id="similar-movies-list"></div>
+            <button onclick="this.parentElement.parentElement.remove()" style="margin-top: 20px; background: #6c757d;">
+                Kapat
+            </button>
+        </div>
+`;
+modal.onclick = function(e) {
+    if (e.target === modal) {
+        modal.remove();
+    }
+};
             
             document.body.appendChild(modal);
             
@@ -1416,22 +1476,108 @@
             getAdvancedRecommendations();
         }
 
-        async function getGenreBasedRecommendations() {
-            if (!authToken || !currentUser.favorite_genres || currentUser.favorite_genres.length === 0) {
-                alert('Önce tür tercihlerinizi belirleyin!');
-                showTab('profile');
-                return;
-            }
-            // Implementation would be similar to getFavoritesBasedRecommendations
-        }
+        // Mevcut getGenreBasedRecommendations fonksiyonunu şununla değiştirin:
+async function getGenreBasedRecommendations() {
+    if (!authToken || !currentUser.favorite_genres || currentUser.favorite_genres.length === 0) {
+        alert('Önce tür tercihlerinizi belirleyin!');
+        showTab('profile', null);
+        return;
+    }
 
-        async function getAdvancedRecommendations() {
-            if (!authToken) {
-                alert('Gelişmiş öneriler için giriş yapmalısınız!');
-                return;
-            }
-            // Implementation would be similar to previous version
+    const resultsDiv = document.getElementById('recommendation-results');
+    resultsDiv.innerHTML = '<div class="loading">🎭 Tür bazlı öneriler hazırlanıyor...</div>';
+
+    try {
+        const response = await fetch('http://localhost:8000/genre-based-recommendations', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`
+            },
+            body: JSON.stringify({
+                genres: currentUser.favorite_genres,
+                n_recommendations: 15
+            })
+        });
+
+        const data = await response.json();
+        if (data.status === 'success') {
+            resultsDiv.innerHTML = `
+                <h3>🎭 Tür Bazlı Öneriler</h3>
+                <p><strong>Seçili Türler:</strong> ${currentUser.favorite_genres.join(', ')}</p>
+                <div id="genre-rec-list"></div>
+            `;
+
+            const recList = document.getElementById('genre-rec-list');
+            data.recommendations.forEach((rec, index) => {
+                const recCard = createMovieCard(rec, index + 1, 'recommendation');
+                recList.appendChild(recCard);
+            });
+        } else {
+            resultsDiv.innerHTML = `
+                <div style="text-align: center; padding: 40px;">
+                    <h3>🎭 ${data.message || 'Tür bazlı öneri bulunamadı'}</h3>
+                    <button onclick="showTab('profile', null)">🎭 Tür Tercihlerini Güncelle</button>
+                </div>
+            `;
         }
+    } catch (error) {
+        resultsDiv.innerHTML = '❌ Tür bazlı öneriler alınırken hata oluştu!';
+    }
+}
+
+
+        // Mevcut getAdvancedRecommendations fonksiyonunu şununla değiştirin:
+async function getAdvancedRecommendations() {
+    if (!authToken) {
+        alert('Gelişmiş öneriler için giriş yapmalısınız!');
+        return;
+    }
+
+    const resultsDiv = document.getElementById('recommendation-results');
+    resultsDiv.innerHTML = '<div class="loading">🚀 Gelişmiş hybrid öneriler hazırlanıyor...</div>';
+
+    try {
+        const response = await fetch('http://localhost:8000/advanced-recommendations', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`
+            },
+            body: JSON.stringify({
+                n_recommendations: 20,
+                hybrid_method: 'weighted'
+            })
+        });
+
+        const data = await response.json();
+        if (data.status === 'success') {
+            resultsDiv.innerHTML = `
+                <h3>🚀 Gelişmiş Hybrid Öneriler</h3>
+                <p><strong>Algoritma:</strong> ${data.method || 'Hybrid Collaborative + Content-Based'}</p>
+                <div id="advanced-rec-list"></div>
+            `;
+
+            const recList = document.getElementById('advanced-rec-list');
+            data.recommendations.forEach((rec, index) => {
+                const recCard = createMovieCard(rec, index + 1, 'recommendation');
+                recList.appendChild(recCard);
+            });
+        } else if (data.status === 'info') {
+            resultsDiv.innerHTML = `
+                <div style="text-align: center; padding: 40px;">
+                    <h3>🚀 ${data.message}</h3>
+                    <p>Önce birkaç filmi puanlayın veya favorilere ekleyin!</p>
+                    <button onclick="showTab('search', null)">🔍 Film Ara</button>
+                    <button onclick="showTab('favorites', null)">❤️ Favorilerim</button>
+                </div>
+            `;
+        }
+    } catch (error) {
+        resultsDiv.innerHTML = '❌ Gelişmiş öneriler alınırken hata oluştu!';
+    }
+}
+
 
         // User Logout
         function logoutUser() {
@@ -1471,15 +1617,27 @@
 
         // Enter key support for search
         document.addEventListener('DOMContentLoaded', function() {
-            const searchInput = document.getElementById('search-input');
-            if (searchInput) {
-                searchInput.addEventListener('keypress', function(e) {
-                    if (e.key === 'Enter') {
-                        searchMovies();
-                    }
+    // Search input için enter key support
+    document.addEventListener('keypress', function(e) {
+        if (e.target.id === 'search-input' && e.key === 'Enter') {
+            e.preventDefault();
+            searchMovies();
+        }
+        // Auth forms için enter key support
+        if ((e.target.id === 'login-username' || e.target.id === 'login-password') && e.key === 'Enter') {
+            e.preventDefault();
+            loginUser();
+        }
+        
+        if ((e.target.id.startsWith('reg-')) && e.key === 'Enter') {
+            e.preventDefault();
+            registerUser();
+        }
+
+
                 });
             }
-        });
+        );
 
         // CSS Animation keyframes
         const style = document.createElement('style');

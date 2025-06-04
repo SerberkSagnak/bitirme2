@@ -6,8 +6,8 @@ from typing import Dict, List, Optional
 from sqlalchemy.orm import Session
 import json
 from datetime import datetime
-# app_complete_v5_fixed.py dosyasının EN BAŞINA şunu ekle:
 from ml_service_simple import ml_service
+
 
 
 # Import modüller
@@ -35,9 +35,18 @@ app.add_middleware(
 security = HTTPBearer()
 
 # Pydantic Models
+# Bu satırları 31. satırdan sonra ekleyin:
+class AdvancedRecommendationRequest(BaseModel):
+    n_recommendations: int = 20
+    hybrid_method: str = "weighted"
+
+class GenreBasedRequest(BaseModel):
+    genres: List[str]
+    n_recommendations: int = 15
+
 class UserRegister(BaseModel):
     username: str
-    email: str
+    email: str 
     password: str
     age: Optional[int] = None
     gender: Optional[str] = None
@@ -701,18 +710,21 @@ async def update_genre_preferences(
             "message": "Tür tercihleri güncellendi!",
             "genres": genre_request.genres
         }
-        
+    
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/advanced-recommendations")
+# Mevcut advanced-recommendations endpoint'ini değiştir:
+@app.post("/advanced-recommendations")
 async def get_advanced_recommendations(
-    n_recommendations: int = 12,
+    request: AdvancedRecommendationRequest,  # dict yerine Pydantic model
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """Basit hibrit öneriler"""
+    db: Session = Depends(get_db)):
+    """Gelişmiş hibrit öneriler"""
     try:
+        # request.n_recommendations kullanın (request['n_recommendations'] yerine)
+        n_recommendations = request.n_recommendations
+        
         # Kullanıcının puanladığı filmler
         user_ratings = db.query(Rating).filter(Rating.user_id == current_user.id).all()
         
@@ -893,6 +905,72 @@ async def predict_movie_rating(
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Puan tahmini hatası: {str(e)}")
+    
+    
+@app.post("/genre-based-recommendations")
+async def get_genre_based_recommendations(
+    request: GenreBasedRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)):
+    """Tür bazlı öneriler"""
+    try:
+        genres = request.genres
+        n_recommendations = request.n_recommendations
+        
+        if not genres:
+            return {
+                "status": "error",
+                "message": "Lütfen önce tür tercihlerinizi belirleyin!",
+                "recommendations": []
+            }
+        
+        # Tür bazlı filmler bul
+        recommended_movies = []
+        all_movies = db.query(Movie).filter(Movie.genres.isnot(None)).limit(200).all()
+        
+        for movie in all_movies:
+            if movie.genres:
+                try:
+                    movie_genres = set(json.loads(movie.genres))
+                    selected_genres = set(genres)
+                    
+                    # Ortak türler var mı?
+                    common_genres = selected_genres.intersection(movie_genres)
+                    if common_genres:
+                        score = len(common_genres) / len(selected_genres)
+                        
+                        # Popülerlik bonusu
+                        if movie.rating_count and movie.rating_count > 20:
+                            score += 0.1
+                        if movie.avg_rating and movie.avg_rating > 7.0:
+                            score += 0.2
+                        
+                        recommended_movies.append({
+                            "movie_id": movie.movie_id,
+                            "title": movie.title,
+                            "release_date": movie.release_date,
+                            "avg_rating": movie.avg_rating or 0,
+                            "popularity": movie.rating_count or 0,
+                            "genres": list(movie_genres),
+                            "imdb_url": movie.imdb_url,
+                            "genre_match_score": round(score, 3)
+                        })
+                except:
+                    continue
+        
+        # Skora göre sırala
+        recommended_movies.sort(key=lambda x: x['genre_match_score'], reverse=True)
+        
+        return {
+            "status": "success",
+            "selected_genres": genres,
+            "method": f"TÜR BAZLI ÖNERİLER ({len(genres)} tür seçili)",
+            "recommendations": recommended_movies[:n_recommendations]
+        }
+        
+    except Exception as e:
+        print(f"Genre-based recommendations error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/ml/status")
 async def get_ml_status():
