@@ -24,7 +24,7 @@
             color: #333;
             margin-bottom: 30px;
             background: linear-gradient(45deg, #667eea, #764ba2);
-            -webkit-background-clip: text;
+            
             -webkit-text-fill-color: transparent;
         }
         
@@ -575,7 +575,7 @@
             }
 
             try {
-                const response = await fetch('http://localhost:8000/register', {
+                const response = await fetch('http://localhost:8001/register', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(userData)

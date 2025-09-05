@@ -1,0 +1,1 @@
+# Bu dosya bitirme2'yi Python package yapar

@@ -3,380 +3,257 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🎬 Film Öneri Sistemi v2</title>
+    <title>🎬 Film Öneri Sistemi v3 - Kişiselleştirilmiş</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f5f5f5;
+        body { font-family: Arial, sans-serif; max-width: 1200px; margin: 0 auto; padding: 20px; background-color: #f5f5f5; }
+        .container { background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h1, h2 { text-align: center; color: #333; }
+        .section { margin-bottom: 40px; padding: 20px; border: 1px solid #ddd; border-radius: 8px; }
+        .auth-section { background-color: #e3f2fd; }
+        .auth-section input { padding: 10px; margin: 5px; border: 1px solid #ccc; border-radius: 5px; }
+        #auth-status { text-align: center; margin-bottom: 20px; font-weight: bold; }
+        .tabs { display: flex; margin-bottom: 20px; justify-content: center; }
+        .tab { padding: 10px 20px; background-color: #ecf0f1; border: none; cursor: pointer; margin: 0 5px; border-radius: 5px; }
+        .tab.active { background-color: #3498db; color: white; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .movie-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; }
+        .movie-card { padding: 15px; border: 1px solid #ccc; border-radius: 8px; background-color: #f9f9f9; }
+        .movie-title { font-weight: bold; color: #2c3e50; margin-bottom: 5px; }
+        .movie-info { font-size: 0.9em; color: #666; }
+        button { background-color: #3498db; color: white; padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer; margin: 5px; }
+        button:hover { background-color: #2980b9; }
+        .btn-success { background-color: #27ae60; }
+        .btn-danger { background-color: #c0392b; }
+        .rating-section { margin-top: 10px; border-top: 1px solid #eee; padding-top: 10px; display: flex; align-items: center; justify-content: space-between; }
+        .rating-section span { font-size: 0.9em; color: #555; }
+        .stars { display: flex; flex-direction: row-reverse; justify-content: flex-end; }
+        .star {
+            background: none; border: none; color: #ccc; cursor: pointer;
+            font-size: 1.6em; padding: 0 2px; transition: color 0.2s;
         }
-        .container {
-            background-color: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        .stars:hover .star { color: #f39c12; }
+        .star:hover ~ .star { color: #ccc; }
+        .toast {
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            background-color: #27ae60; color: white; padding: 15px 25px; border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2); z-index: 1000; display: none;
         }
-        h1 {
-            text-align: center;
-            color: #333;
-            margin-bottom: 30px;
-        }
-        .section {
-            margin-bottom: 40px;
-            padding: 20px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-        }
-        .search-section {
-            background-color: #f8f9fa;
-        }
-        .search-box {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-        .search-box input {
-            flex: 1;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            font-size: 16px;
-        }
-        .search-box button {
-            padding: 12px 20px;
-            background-color: #3498db;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        .movie-card {
-            display: inline-block;
-            width: 300px;
-            margin: 10px;
-            padding: 15px;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            background-color: #f9f9f9;
-        }
-        .movie-title {
-            font-weight: bold;
-            color: #2c3e50;
-            margin-bottom: 5px;
-        }
-        .movie-info {
-            font-size: 0.9em;
-            color: #666;
-            margin-bottom: 10px;
-        }
-        .rating-input {
-            margin: 5px 0;
-        }
-        .rating-input select {
-            margin-left: 10px;
-            padding: 5px;
-        }
-        .search-result {
-            background-color: #e3f2fd;
-            border-left: 4px solid #2196f3;
-        }
-        button {
-            background-color: #3498db;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            margin: 10px 5px;
-        }
-        button:hover {
-            background-color: #2980b9;
-        }
-        .recommendations {
-            background-color: #e8f5e8;
-            padding: 20px;
-            border-radius: 8px;
-            margin-top: 20px;
-        }
-        .loading {
-            text-align: center;
-            color: #666;
-        }
-        .tabs {
-            display: flex;
-            margin-bottom: 20px;
-        }
-        .tab {
-            padding: 10px 20px;
-            background-color: #ecf0f1;
-            border: none;
-            cursor: pointer;
-            margin-right: 5px;
-        }
-        .tab.active {
-            background-color: #3498db;
-            color: white;
-        }
-        .tab-content {
-            display: none;
-        }
-        .tab-content.active {
-            display: block;
-        }
+        .loading { text-align: center; color: #666; font-size: 1.2em; padding: 20px; }
     </style>
-    aaaa
 </head>
 <body>
     <div class="container">
-        <h1>🎬 Film Öneri Sistemi v2.0</h1>
+        <h1>🎬 Film Öneri Sistemi v3</h1>
         
-       <div class="tabs">
-    <button class="tab active" onclick="showTab('onboarding', this)">📋 Film Puanlama</button>
-    <button class="tab" onclick="showTab('search', this)">🔍 Film Arama</button>
-    <button class="tab" onclick="showTab('recommendations', this)">🎯 Önerilerim</button>
+        <div id="auth-section" class="section auth-section">
+            <h2>Kullanıcı Girişi</h2>
+            <div id="login-form" style="text-align: center;">
+                <input type="text" id="username" placeholder="Kullanıcı Adı">
+                <input type="password" id="password" placeholder="Şifre">
+                <button onclick="login()">Giriş Yap</button>
+            </div>
+            <div id="auth-status"></div>
         </div>
 
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('recommendations', this)">🎯 Önerilerim</button>
+            <button class="tab" onclick="showTab('search', this)">🔍 Film Arama</button>
+        </div>
 
-        <!-- Onboarding Tab -->
-        <div id="onboarding" class="tab-content active">
+        <!-- Recommendations Tab -->
+        <div id="recommendations" class="tab-content active">
             <div class="section">
-                <h2>📋 Adım 1: Bu filmlerden birkaçını puanlayın</h2>
-                <button onclick="loadOnboardingMovies()">Filmleri Yükle</button>
-                <div id="onboarding-movies"></div>
-                <button onclick="getRecommendations()" style="background-color: #27ae60;">Öneri Al!</button>
+                <h2>🎯 Film Önerileriniz</h2>
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <button class="btn-success" onclick="getRecommendationsBasedOnSimilarUsers()">Bana Özel Öneriler Getir (Benzer Kullanıcılar)</button>
+                </div>
+                <div id="recommendation-results" class="movie-grid"></div>
             </div>
         </div>
 
         <!-- Search Tab -->
         <div id="search" class="tab-content">
-            <div class="section search-section">
+            <div class="section">
                 <h2>🔍 Film Arama</h2>
-                <div class="search-box">
-                    <input type="text" id="search-input" placeholder="Film adı yazın... (örn: star wars, titanic, batman)">
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="search-input" placeholder="Film adı..." style="flex: 1; padding: 10px;">
                     <button onclick="searchMovies()">Ara</button>
                 </div>
-                <div id="search-results"></div>
-            </div>
-        </div>
-
-        <!-- Recommendations Tab -->
-        <div id="recommendations" class="tab-content">
-            <div class="section">
-                <h2>🎯 Film Önerileriniz</h2>
-                <div id="recommendation-results"></div>
+                <div id="search-results" class="movie-grid" style="margin-top: 20px;"></div>
             </div>
         </div>
     </div>
 
+    <div id="toast-notification" class="toast"></div>
+
     <script>
-        let movies = [];
-        let userRatings = {};
+        const API_URL = 'http://127.0.0.1:8000';
 
-        // Tab Navigation - DÜZELTİLMİŞ VERSİYON
-function showTab(tabName, clickedButton = null) {
-    // Tüm tab içeriklerini gizle
-    document.querySelectorAll('.tab-content').forEach(content => {
-        content.classList.remove('active');
-    });
-    document.querySelectorAll('.tab').forEach(tab => {
-        tab.classList.remove('active');
-    });
-    
-    // Seçilen tab'ı göster
-    document.getElementById(tabName).classList.add('active');
-    
-    // Eğer button click'inden geliyorsa, o button'ı aktif yap
-    if (clickedButton) {
-        clickedButton.classList.add('active');
-    } else {
-        // Programatik çağrıda, doğru tab button'ını bul ve aktif yap
-        const buttons = document.querySelectorAll('.tab');
-        buttons.forEach(button => {
-            if (button.textContent.includes('🎯 Önerilerim') && tabName === 'recommendations') {
-                button.classList.add('active');
-            }
+        document.addEventListener('DOMContentLoaded', () => {
+            checkLoginStatus();
         });
-    }
-}
 
+        function showTab(tabName, clickedButton) {
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.getElementById(tabName).classList.add('active');
+            clickedButton.classList.add('active');
+        }
 
-        // 🆕 Film Arama Fonksiyonu
+        function checkLoginStatus() {
+            const token = localStorage.getItem('movieToken');
+            const authStatusDiv = document.getElementById('auth-status');
+            if (token) {
+                const username = JSON.parse(atob(token.split('.')[1])).username;
+                document.getElementById('login-form').style.display = 'none';
+                authStatusDiv.innerHTML = `Hoş geldin, ${username}! <button class="btn-danger" onclick="logout()">Çıkış Yap</button>`;
+            } else {
+                document.getElementById('login-form').style.display = 'block';
+                authStatusDiv.innerHTML = 'Kişiselleştirilmiş öneriler için lütfen giriş yapın.';
+            }
+        }
+
+        async function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            if (!username || !password) {
+                alert('Kullanıcı adı ve şifre gereklidir.');
+                return;
+            }
+            try {
+                const response = await fetch(`${API_URL}/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                const data = await response.json();
+                if (response.ok && data.access_token) {
+                    localStorage.setItem('movieToken', data.access_token);
+                    checkLoginStatus();
+                } else {
+                    alert(data.detail || 'Giriş başarısız.');
+                }
+            } catch (error) {
+                alert('Giriş sırasında bir hata oluştu.');
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('movieToken');
+            checkLoginStatus();
+        }
+
+        async function getRecommendationsBasedOnSimilarUsers() {
+            const token = localStorage.getItem('movieToken');
+            if (!token) {
+                alert('Bu özellik için giriş yapmalısınız.');
+                return;
+            }
+            const resultsDiv = document.getElementById('recommendation-results');
+            resultsDiv.innerHTML = '<div class="loading">🤖 Benzer zevklere sahip kullanıcılara göre önerileriniz hesaplanıyor...</div>';
+
+            try {
+                const response = await fetch(`${API_URL}/recommendations/based_on_similar_users`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.detail || 'Öneriler alınamadı.');
+                }
+                const data = await response.json();
+                displayMovies(data.recommendations, resultsDiv, `User-Based Collaborative Filtering`);
+            } catch (error) {
+                resultsDiv.innerHTML = `❌ Hata: ${error.message}`;
+            }
+        }
+
         async function searchMovies() {
             const query = document.getElementById('search-input').value.trim();
             const resultsDiv = document.getElementById('search-results');
-            
-            if (!query) {
-                alert('Lütfen bir film adı yazın!');
-                return;
-            }
-
+            if (!query) return;
             resultsDiv.innerHTML = '<div class="loading">🔄 Aranıyor...</div>';
-            
             try {
-                const response = await fetch(`http://localhost:8000/search?q=${encodeURIComponent(query)}`);
+                const response = await fetch(`${API_URL}/search?q=${encodeURIComponent(query)}`);
                 const data = await response.json();
-                
-                resultsDiv.innerHTML = `<h3>🎬 "${query}" için ${data.count} sonuç bulundu:</h3>`;
-                
-                if (data.results.length === 0) {
-                    resultsDiv.innerHTML += '<p>Hiç film bulunamadı. Farklı bir terim deneyin.</p>';
-                    return;
-                }
-                
-                data.results.forEach(movie => {
-                    const movieCard = document.createElement('div');
-                    movieCard.className = 'movie-card search-result';
-                    movieCard.innerHTML = `
-                        <div class="movie-title">${movie.title}</div>
-                        <div class="movie-info">
-                            📅 ${movie.release_date} | ⭐ ${movie.avg_rating} | 👥 ${movie.popularity} kişi
-                        </div>
-                        <div class="movie-info">
-                            🔗 <a href="${movie.imdb_url}" target="_blank">IMDB</a>
-                        </div>
-                        <div class="rating-input">
-                            Puanınız: 
-                            <select onchange="rateMovie(${movie.movie_id}, this.value)">
-                                <option value="0">Puanla</option>
-                                <option value="1">1 ⭐</option>
-                                <option value="2">2 ⭐</option>
-                                <option value="3">3 ⭐</option>
-                                <option value="4">4 ⭐</option>
-                                <option value="5">5 ⭐</option>
-                            </select>
-                        </div>
-                    `;
-                    resultsDiv.appendChild(movieCard);
-                });
-                
+                displayMovies(data.results, resultsDiv, `Arama Sonuçları`);
             } catch (error) {
                 resultsDiv.innerHTML = '❌ Arama sırasında hata oluştu!';
             }
         }
 
-        // Enter tuşu ile arama
-        document.addEventListener('DOMContentLoaded', function() {
-            document.getElementById('search-input').addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    searchMovies();
-                }
+        function displayMovies(movies, container, title) {
+            container.innerHTML = `<h3>${title} (${movies.length} film)</h3>`;
+            if (movies.length === 0) {
+                container.innerHTML += '<p>Gösterilecek film bulunamadı.</p>';
+                return;
+            }
+            movies.forEach(movie => {
+                const movieCard = document.createElement('div');
+                movieCard.className = 'movie-card';
+                movieCard.innerHTML = `
+                    <div class="movie-title">${movie.title || 'Başlık Yok'}</div>
+                    <div class="movie-info">
+                        ⭐ Ortalama Puan: ${movie.avg_rating ? movie.avg_rating.toFixed(1) : 'N/A'}
+                        ${movie.recommendation_score ? `<br>🎯 Öneri Skoru: ${movie.recommendation_score.toFixed(2)}` : ''}
+                    </div>
+                    <div class="movie-info">${(movie.genres || []).join(', ') || 'Tür Belirtilmemiş'}</div>
+                    <div class="rating-section">
+                        <span>Puan Ver:</span>
+                        <div class="stars">
+                            ${[5, 4, 3, 2, 1].map(star => `<button class="star" onclick="rateMovie(${movie.id || movie.movie_id}, ${star})">★</button>`).join('')}
+                        </div>
+                    </div>
+                `;
+                container.appendChild(movieCard);
             });
-        });
+        }
 
-        // Önceki fonksiyonlar...
-        async function loadOnboardingMovies() {
-            const moviesDiv = document.getElementById('onboarding-movies');
-            moviesDiv.innerHTML = '<div class="loading">🔄 Filmler yükleniyor...</div>';
-            
+        function showToast(message, duration = 3000) {
+            const toast = document.getElementById('toast-notification');
+            toast.textContent = message;
+            toast.style.display = 'block';
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, duration);
+        }
+
+        async function rateMovie(movieId, rating) {
+            const token = localStorage.getItem('movieToken');
+            if (!token) {
+                alert('Puan vermek için giriş yapmalısınız.');
+                return;
+            }
+
+            console.log(`Puan veriliyor: Film ID ${movieId}, Puan ${rating}`);
+
             try {
-                const response = await fetch('http://localhost:8000/onboarding-movies');
-                const data = await response.json();
-                movies = data.movies;
-                
-                moviesDiv.innerHTML = '';
-                movies.forEach(movie => {
-                    const movieCard = document.createElement('div');
-                    movieCard.className = 'movie-card';
-                    movieCard.innerHTML = `
-                        <div class="movie-title">${movie.title}</div>
-                        <div class="movie-info">
-                            ⭐ ${movie.avg_rating} | 👥 ${movie.popularity} kişi
-                        </div>
-                        <div class="rating-input">
-                            Puanınız: 
-                            <select onchange="rateMovie(${movie.movie_id}, this.value)">
-                                <option value="0">Puanla</option>
-                                <option value="1">1 ⭐</option>
-                                <option value="2">2 ⭐</option>
-                                <option value="3">3 ⭐</option>
-                                <option value="4">4 ⭐</option>
-                                <option value="5">5 ⭐</option>
-                            </select>
-                        </div>
-                    `;
-                    moviesDiv.appendChild(movieCard);
+                const response = await fetch(`${API_URL}/rate-movie`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ movie_id: movieId, rating: parseFloat(rating) })
                 });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.detail || 'Puanlama sırasında bir hata oluştu.');
+                }
+
+                showToast(`'${data.movie_title}' filmine ${data.rating} puan verdiniz. Önerileriniz güncelleniyor...`);
+
+                if (data.dynamic_recommendations && data.dynamic_recommendations.length > 0) {
+                    const recommendationsContainer = document.getElementById('recommendation-results');
+                    displayMovies(data.dynamic_recommendations, recommendationsContainer, 'Sizin İçin Anında Güncellenen Öneriler');
+                    showTab('recommendations', document.querySelector('.tab[onclick*="recommendations"]'));
+                }
             } catch (error) {
-                moviesDiv.innerHTML = '❌ Filmler yüklenirken hata oluştu!';
+                alert(`Hata: ${error.message}`);
             }
         }
-
-        function rateMovie(movieId, rating) {
-            if (rating > 0) {
-                userRatings[movieId] = parseFloat(rating);
-                console.log('Puanlanan filmler:', userRatings);
-            }
-        }
-
-        async function getRecommendations() {
-    const recommendationsDiv = document.getElementById('recommendation-results');
-    
-    if (Object.keys(userRatings).length === 0) {
-        alert('Lütfen en az bir film puanlayın!');
-        return;
-    }
-
-    console.log('🔍 Gönderilen user ratings:', userRatings);
-    recommendationsDiv.innerHTML = '<div class="loading">🤖 Öneriler hesaplanıyor...</div>';
-    
-    try {
-        const requestBody = {
-            ratings: userRatings,
-            n_recommendations: 8
-        };
-        
-        console.log('🔍 Request body:', requestBody);
-        
-        const response = await fetch('http://localhost:8000/recommend', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(requestBody)
-        });
-        
-        console.log('🔍 Response status:', response.status);
-        console.log('🔍 Response ok:', response.ok);
-        
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        console.log('🔍 Response data:', data);
-        
-        recommendationsDiv.innerHTML = `
-            <div class="recommendations">
-                <h3>🎯 Size Özel ${data.recommendations.length} Film Önerisi</h3>
-                <p><strong>Durum:</strong> ${data.user_rating_count} film puanladınız | ${data.method}</p>
-                <div id="rec-list"></div>
-            </div>
-        `;
-        
-        const recList = document.getElementById('rec-list');
-        data.recommendations.forEach((rec, index) => {
-            const recCard = document.createElement('div');
-            recCard.className = 'movie-card';
-            recCard.innerHTML = `
-                <div class="movie-title">${index + 1}. ${rec.title}</div>
-                <div class="movie-info">
-                    🎯 Skor: ${rec.score} | ⭐ ${rec.avg_rating} | 👥 ${rec.popularity}
-                </div>
-            `;
-            recList.appendChild(recCard);
-        });
-        
-        // Öneriler tab'ına geç
-        showTab('recommendations');
-        
-    } catch (error) {
-        console.error('❌ Hata detayı:', error);
-        recommendationsDiv.innerHTML = `❌ Hata: ${error.message}`;
-    }
-}
-
     </script>
 </body>
 </html>

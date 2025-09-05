@@ -6,9 +6,12 @@ from sqlalchemy.orm import Session
 from database_fixed import User, SessionLocal
 import json
 import hashlib
+import warnings
+warnings.filterwarnings("ignore", message=".*trapped.*error reading bcrypt version")
+
 
 # Security Ayarları
-SECRET_KEY = "your-secret-key-here-make-it-random-and-secure-film-recommendation-system"
+SECRET_KEY = "Aa1234567."
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
@@ -125,14 +128,14 @@ class UserService:
         user = self.get_user_by_username(username)
         if not user:
             print(f"❌ Kullanıcı bulunamadı: {username}")
-            return False
+            return None  # ✅ DÜZELTME: False değil None return et
         
         print(f"✅ Kullanıcı bulundu: ID={user.id}")
         print(f"📧 Email: {user.email}")
         print(f"🔐 DB Hash (ilk 20 kar): {user.hashed_password[:20]}...")
         print(f"🔐 DB Hash uzunluğu: {len(user.hashed_password)}")
         
-        # MovieLens kullanıcıları için MD5 kontrolü (auth.py'de)
+        # MovieLens kullanıcıları için MD5 kontrolü
         if username.startswith("ml_user_"):
             print(f"🎬 MovieLens kullanıcısı tespit edildi")
             
@@ -145,7 +148,7 @@ class UserService:
                 return user
             else:
                 print(f"❌ MovieLens MD5 hash eşleşmedi")
-                return False
+                return None  # ✅ DÜZELTME: False değil None
         
         # Normal kullanıcılar için bcrypt kontrolü
         else:
@@ -157,7 +160,7 @@ class UserService:
                     return user
                 else:
                     print(f"❌ Bcrypt hash eşleşmedi")
-                    return False
+                    return None  # ✅ DÜZELTME: False değil None
             except Exception as e:
                 print(f"❌ Bcrypt kontrolü hatası: {e}")
                 # Bcrypt başarısız olursa MD5 dene
@@ -167,39 +170,120 @@ class UserService:
                     return user
                 else:
                     print(f"❌ Fallback MD5 de başarısız")
-                    return False
+                    return None  # ✅ DÜZELTME: False değil None
     
     def get_user_by_username(self, username: str):
         """Username ile kullanıcı bul"""
-        return self.db.query(User).filter(User.username == username).first()
+        try:
+            return self.db.query(User).filter(User.username == username).first()
+        except Exception as e:
+            print(f"❌ get_user_by_username hatası: {e}")
+            return None
     
     def get_user_by_email(self, email: str):
         """Email ile kullanıcı bul"""
-        return self.db.query(User).filter(User.email == email).first()
+        try:
+            return self.db.query(User).filter(User.email == email).first()
+        except Exception as e:
+            print(f"❌ get_user_by_email hatası: {e}")
+            return None
     
     def get_user_by_id(self, user_id: int):
         """ID ile kullanıcı bul"""
-        return self.db.query(User).filter(User.id == user_id).first()
+        try:
+            return self.db.query(User).filter(User.id == user_id).first()
+        except Exception as e:
+            print(f"❌ get_user_by_id hatası: {e}")
+            return None
     
     def update_user_profile(self, user_id: int, **kwargs):
         """Kullanıcı profilini güncelle"""
-        user = self.get_user_by_id(user_id)
-        if not user:
+        try:
+            user = self.get_user_by_id(user_id)
+            if not user:
+                return None
+            
+            for key, value in kwargs.items():
+                if key == "favorite_genres" and value:
+                    value = json.dumps(value)
+                if hasattr(user, key):
+                    setattr(user, key, value)
+            
+            user.last_active = datetime.utcnow()
+            self.db.commit()
+            self.db.refresh(user)
+            
+            return user
+        except Exception as e:
+            self.db.rollback()
+            print(f"❌ update_user_profile hatası: {e}")
             return None
+    
+    def create_test_users(self):
+        """Test kullanıcıları oluştur"""
+        test_users = [
+            {
+                "username": "alice",
+                "email": "alice@test.com",
+                "password": "123456",
+                "age": 25,
+                "gender": "F"
+            },
+            {
+                "username": "bob", 
+                "email": "bob@test.com",
+                "password": "password123",
+                "age": 30,
+                "gender": "M"
+            },
+            {
+                "username": "ml_user_1",
+                "email": "ml1@movielens.com", 
+                "password": "movielens123",
+                "age": 28,
+                "gender": "M"
+            }
+        ]
         
-        for key, value in kwargs.items():
-            if key == "favorite_genres" and value:
-                value = json.dumps(value)
-            if hasattr(user, key):
-                setattr(user, key, value)
+        created_users = []
+        for user_data in test_users:
+            try:
+                # Kullanıcı zaten var mı kontrol et
+                existing = self.get_user_by_username(user_data["username"])
+                if existing:
+                    print(f"⚠️ Kullanıcı zaten mevcut: {user_data['username']}")
+                    created_users.append(existing)
+                    continue
+                
+                # MovieLens kullanıcısı için MD5 hash kullan
+                if user_data["username"].startswith("ml_user_"):
+                    hashed_password = hashlib.md5(user_data["password"].encode()).hexdigest()
+                else:
+                    hashed_password = get_password_hash(user_data["password"])
+                
+                user = User(
+                    username=user_data["username"],
+                    email=user_data["email"],
+                    hashed_password=hashed_password,
+                    age=user_data.get("age"),
+                    gender=user_data.get("gender")
+                )
+                
+                self.db.add(user)
+                self.db.commit()
+                self.db.refresh(user)
+                
+                print(f"✅ Test kullanıcısı oluşturuldu: {user.username}")
+                created_users.append(user)
+                
+            except Exception as e:
+                self.db.rollback()
+                print(f"❌ Test kullanıcısı oluşturma hatası: {e}")
         
-        user.last_active = datetime.utcnow()
-        self.db.commit()
-        self.db.refresh(user)
-        
-        return user
+        return created_users
 
-# Test fonksiyonu
+# ... (önceki kodlar aynı) ...
+
 def test_user_system():
     """Kullanıcı sistemini test et"""
     print("🧪 === USER SİSTEMİ TEST ===\n")
@@ -207,11 +291,17 @@ def test_user_system():
     user_service = UserService()
     
     try:
+        # Test kullanıcıları oluştur
+        print("0️⃣ Test kullanıcıları oluşturuluyor...")
+        user_service.create_test_users()
+        print("\n" + "="*50 + "\n")
+        
         # 1. Normal kullanıcı testi
         print("1️⃣ Normal kullanıcı authentication testi:")
         auth_result = user_service.authenticate_user("alice", "123456")
         if auth_result:
             print("✅ Alice authentication başarılı!")
+            print(f"   User ID: {auth_result.id}, Email: {auth_result.email}")
         else:
             print("❌ Alice authentication başarısız!")
         
@@ -222,6 +312,7 @@ def test_user_system():
         auth_result = user_service.authenticate_user("ml_user_1", "movielens123")
         if auth_result:
             print("✅ ml_user_1 authentication başarılı!")
+            print(f"   User ID: {auth_result.id}, Email: {auth_result.email}")
         else:
             print("❌ ml_user_1 authentication başarısız!")
         
@@ -239,10 +330,25 @@ def test_user_system():
         else:
             print("❌ Token doğrulanamadı!")
         
+        print("\n" + "="*50 + "\n")
+        
+        # 4. Yanlış şifre testi
+        print("4️⃣ Yanlış şifre testi:")
+        auth_result = user_service.authenticate_user("alice", "wrongpassword")
+        if not auth_result:
+            print("✅ Yanlış şifre doğru şekilde reddedildi!")
+        else:
+            print("❌ Yanlış şifre kabul edildi!")
+    
     except Exception as e:
         print(f"❌ Test hatası: {e}")
         import traceback
         traceback.print_exc()
+    finally:
+        # Session'ı temizle
+        if hasattr(user_service, 'db'):
+            user_service.db.close()
+            print("🔒 Database session kapatıldı")
 
 if __name__ == "__main__":
     test_user_system()
