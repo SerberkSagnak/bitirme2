@@ -97,6 +97,7 @@ class SimpleMovie:
         self.title = row[1] if len(row) > 1 else None
         self.genres = row[2] if len(row) > 2 else None
         self.avg_rating = row[3] if len(row) > 3 else None
+        self.imdb_score = row[4] if len(row) > 4 else None # ← Yeni eklendi
 
 class SimpleUser:
     def __init__(self, row):
@@ -794,10 +795,15 @@ async def search_movies(q: str, limit: int = 20, db: Session = Depends(get_db)):
         total_movies = db.query(Movie).count()
         logger.info(f"[*] Total movies in DB: {total_movies}")
         
-        # Basit arama yap
-        movies = db.query(Movie).filter(
-            Movie.title.ilike(search_term)
-        ).limit(limit).all()
+        # Search in database
+        query = f"""
+            SELECT id, title, genres, avg_rating, imdb_score 
+            FROM movies 
+            WHERE title LIKE '%{q}%' 
+            ORDER BY avg_rating DESC 
+            LIMIT 20
+        """
+        results = conn.execute(query).fetchall()
         
         logger.info(f"[*] Found {len(movies)} movies")
         

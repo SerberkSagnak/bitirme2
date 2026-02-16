@@ -46,15 +46,18 @@ class CleanDynamicDeepRecommender:
         self.logger = logging.getLogger(__name__)
 
     def load_training_data(self) -> pd.DataFrame:
-        """Database'den training data yükle"""
+        """Veritabanından tür ve ortalama puan bilgileriyle zenginleştirilmiş eğitim verisini yükle."""
         try:
             conn = sqlite3.connect("movielens_100k.db")
             
-            # GENIŞ QUERY - TÜM RATING FORMAT'LARINI DESTEKLE
+            # JOIN'li yeni sorgu: Filmlerin türlerini ve ortalama puanlarını da çekiyoruz.
             query = """
             SELECT 
                 ui.user_id,
                 ui.movie_id,
+                m.genres,
+                m.avg_rating,
+                m.imdb_score,
                 CASE 
                     WHEN JSON_EXTRACT(ui.extra_data, '$.rating') IS NOT NULL THEN
                         CAST(JSON_EXTRACT(ui.extra_data, '$.rating') AS FLOAT)
@@ -63,8 +66,10 @@ class CleanDynamicDeepRecommender:
                     ELSE NULL
                 END as rating
             FROM user_interactions ui
+            JOIN movies m ON ui.movie_id = m.id
             WHERE ui.interaction_type = 'rating'
             AND ui.extra_data IS NOT NULL
+            AND m.genres IS NOT NULL -- Tür bilgisi olmayan filmleri eğitime dahil etme
             AND (
                 JSON_EXTRACT(ui.extra_data, '$.rating') IS NOT NULL 
                 OR (ui.extra_data LIKE '%.%' AND CAST(ui.extra_data AS FLOAT) BETWEEN 1.0 AND 5.0)
@@ -75,24 +80,26 @@ class CleanDynamicDeepRecommender:
             df = pd.read_sql_query(query, conn)
             conn.close()
             
-            self.logger.info(f"[+] Loaded {len(df)} interactions from database")
-            
-            # COMPLETE DEBUG + RAW DATABASE CHECK
-            print(f"[DEBUG] Dataframe: {df.shape} rows")
-            print(f"[DEBUG] Unique users in DF: {df['user_id'].nunique()}")
-            
-            # DEBUG output
-            print(f"[DEBUG] Loaded users: {sorted(df['user_id'].unique()) if not df.empty else 'None'}")
+            self.logger.info(f"[+] Veritabanından {len(df)} zenginleştirilmiş etkileşim yüklendi.")
             
             if df.empty or df['user_id'].nunique() <= 1:
-                print("[ERROR] Insufficient training data!")
-                print("[FIX] Using basic fallback system...")
-                return df
+                self.logger.error("[HATA] Yetersiz eğitim verisi!")
+                return pd.DataFrame()
+            
+            # avg_rating'deki boş değerleri ortalama ile doldur
+            avg_rating_overall = df['avg_rating'].mean()
+            df['avg_rating'].fillna(avg_rating_overall, inplace=True)
+            
+            # imdb_score'daki boş değerleri doldur
+            imdb_score_overall = df['imdb_score'].mean()
+            df['imdb_score'].fillna(imdb_score_overall, inplace=True)
+            
+            self.logger.info(f"[+] Boş 'avg_rating' ({avg_rating_overall:.2f}) ve 'imdb_score' ({imdb_score_overall:.2f}) dolduruldu.")
             
             return df
             
         except Exception as e:
-            self.logger.error(f"[x] Data loading error: {e}")
+            self.logger.error(f"[x] Zenginleştirilmiş veri yükleme hatası: {e}")
             return pd.DataFrame()
 
     def prepare_mappings(self, df: pd.DataFrame) -> bool:
@@ -115,14 +122,24 @@ class CleanDynamicDeepRecommender:
             self.logger.error(f"[x] Mapping creation error: {e}")
             return False
 
-    def build_neural_model(self, n_users: int, n_movies: int) -> tf.keras.Model:
-        """Clean Neural Collaborative Filtering model"""
+    def build_neural_model(self, n_users: int, n_movies: int, n_genres: int) -> tf.keras.Model:
+        """Genişletilmiş Hibrit NCF Modeli (Tür ve Puan Özellikleriyle)"""
         
-        # Input layers
-        user_input = tf.keras.Input(shape=(), name='user_id', dtype='int32')
-        movie_input = tf.keras.Input(shape=(), name='movie_id', dtype='int32')
+        # --- GİRİŞ KATMANLARI ---
+        # Mevcut girişler
+        user_input = tf.keras.Input(shape=(), name='user_id_input', dtype='int32')
+        movie_input = tf.keras.Input(shape=(), name='movie_id_input', dtype='int32')
         
-        # Embedding layers
+        # Yeni eklenen içerik özellikleri için girişler
+        # Türler için giriş (multi-hot vector)
+        genre_input = tf.keras.Input(shape=(n_genres,), name='genre_input')
+        # Ortalama puan için giriş (normalize edilmiş tek bir sayı)
+        avg_rating_input = tf.keras.Input(shape=(1,), name='avg_rating_input')
+        # IMDb puanı için giriş (normalize edilmiş tek bir sayı)
+        imdb_score_input = tf.keras.Input(shape=(1,), name='imdb_score_input')
+
+        # --- EMBEDDING KATMANLARI ---
+        # Kullanıcı ve film için embedding'ler (gizli özellikleri öğrenir)
         user_embedding = tf.keras.layers.Embedding(
             n_users, self.embedding_dim, 
             name='user_embedding'
@@ -133,47 +150,87 @@ class CleanDynamicDeepRecommender:
             name='movie_embedding'
         )(movie_input)
         
-        # Flatten
+        # Vektörleri düzleştir
         user_vec = tf.keras.layers.Flatten()(user_embedding)
         movie_vec = tf.keras.layers.Flatten()(movie_embedding)
         
-        # Neural network layers
-        concat = tf.keras.layers.Concatenate()([user_vec, movie_vec])
+        # --- TÜM ÖZELLİKLERİ BİRLEŞTİRME ---
+        # Hem embedding'leri hem de yeni içerik özelliklerini birleştir
+        concat = tf.keras.layers.Concatenate()([
+            user_vec, 
+            movie_vec, 
+            genre_input, 
+            avg_rating_input,
+            imdb_score_input
+        ])
+        
+        # --- YOĞUN SİNİR AĞI KATMANLARI ---
+        # Birleştirilmiş bu zengin vektörden karmaşık ilişkileri öğren
         dense1 = tf.keras.layers.Dense(256, activation='relu')(concat)
-        dropout1 = tf.keras.layers.Dropout(0.3)(dense1)
+        dropout1 = tf.keras.layers.Dropout(0.4)(dense1) # Dropout artırıldı
         dense2 = tf.keras.layers.Dense(128, activation='relu')(dropout1)
-        dropout2 = tf.keras.layers.Dropout(0.3)(dense2)
-        dense3 = tf.keras.layers.Dense(64, activation='relu')(dropout2)
+        dropout2 = tf.keras.layers.Dropout(0.4)(dense2) # Dropout artırıldı
         
-        # Output layer
-        output = tf.keras.layers.Dense(1, activation='sigmoid')(dense3)
+        # --- ÇIKIŞ KATMANI ---
+        output = tf.keras.layers.Dense(1, activation='sigmoid')(dropout2)
         
-        # Build model
-        model = tf.keras.Model(inputs=[user_input, movie_input], outputs=output)
+        # Modeli oluştur (artık 5 girişi var)
+        model = tf.keras.Model(
+            inputs=[user_input, movie_input, genre_input, avg_rating_input, imdb_score_input], 
+            outputs=output
+        )
         
-        # CLEAN COMPILE
+        # Modeli derle
         model.compile(
             optimizer=tf.keras.optimizers.Adam(learning_rate=0.001),
-            loss='mean_squared_error',  # String instead of function reference
+            loss='mean_squared_error',
             metrics=['mean_absolute_error']
         )
         
         return model
 
     def train_model(self) -> bool:
-        """Model eğitimi - CLEAN VERSION"""
+        """Genişletilmiş hibrit modeli eğitir (Tür ve Puan özellikleriyle)."""
         try:
-            # Data loading
+            # 1. Zenginleştirilmiş Veriyi Yükle
             df = self.load_training_data()
             if df.empty:
-                self.logger.error("[x] No training data!")
+                self.logger.error("[x] Eğitim için veri yüklenemedi!")
                 return False
             
-            # Create mappings
+            # 2. Haritalamaları (Mappings) Hazırla
             if not self.prepare_mappings(df):
                 return False
+
+            # --- 3. ÖZELLİK MÜHENDİSLİĞİ ---
+
+            # A. Tür (Genre) Özelliklerini Hazırla (Multi-hot encoding)
+            self.logger.info("[*] Tür özellikleri hazırlanıyor (Multi-hot encoding)...")
+            all_genres = sorted(list(set([genre for sublist in df['genres'].str.split('|') for genre in sublist])))
+            self.genre_to_idx = {genre: i for i, genre in enumerate(all_genres)}
+            self.idx_to_genre = {i: genre for genre, i in self.genre_to_idx.items()}
+            n_genres = len(all_genres)
             
-            # Prepare training arrays
+            genre_features = np.zeros((len(df), n_genres), dtype=np.float32)
+            for i, genres_str in enumerate(df['genres']):
+                for genre in genres_str.split('|'):
+                    if genre in self.genre_to_idx:
+                        genre_features[i, self.genre_to_idx[genre]] = 1.0
+            self.logger.info(f"[+] {n_genres} benzersiz tür için özellik vektörleri oluşturuldu.")
+
+            # B. Ortalama Puan (avg_rating) Özelliğini Hazırla (Normalization)
+            self.logger.info("[*] Ortalama puan ve IMDb puanı özellikleri normalize ediliyor...")
+            # Puanları 0-1 arasına ölçekle (genellikle 1-10 arası olduğu varsayılarak)
+            avg_rating_features = df['avg_rating'].values / 5.0 # Site içi 5 üzerinden
+            avg_rating_features = np.expand_dims(avg_rating_features, axis=-1)
+            
+            # IMDb Puanı (0-10) -> 0-1
+            imdb_score_features = df['imdb_score'].values / 10.0
+            imdb_score_features = np.expand_dims(imdb_score_features, axis=-1)
+            
+            self.logger.info("[+] 'avg_rating' ve 'imdb_score' özellikleri modele hazır.")
+
+            # 4. Eğitim İçin Gerekli Dizileri (Arrays) Oluştur
             df['user_idx'] = df['user_id'].map(self.user_id_to_idx)
             df['movie_idx'] = df['movie_id'].map(self.movie_id_to_idx)
             df['rating_normalized'] = df['rating'] / 5.0
@@ -182,49 +239,53 @@ class CleanDynamicDeepRecommender:
             movies = df['movie_idx'].values
             ratings = df['rating_normalized'].values
             
-            # Build model
+            # 5. Yeni Hibrit Modeli Oluştur
             n_users = len(self.user_id_to_idx)
             n_movies = len(self.movie_id_to_idx)
             
-            self.model = self.build_neural_model(n_users, n_movies)
+            self.model = self.build_neural_model(n_users, n_movies, n_genres)
+            self.model.summary() # Modelin mimarisini konsola yazdır
             
-            self.logger.info(f"[*] Training model with {len(users)} interactions...")
+            self.logger.info(f"[*] Hibrit model {len(users)} etkileşim ile eğitiliyor...")
             
-            # Training
+            # 6. Modeli Eğit (Artık 5 giriş verisi var)
             history = self.model.fit(
-                [users, movies], ratings,
-                batch_size=32,
-                epochs=20,
+                [users, movies, genre_features, avg_rating_features, imdb_score_features], 
+                ratings,
+                batch_size=64, # Batch size artırıldı
+                epochs=25,     # Epochs artırıldı
                 validation_split=0.2,
                 verbose=1,
                 callbacks=[
-                    tf.keras.callbacks.EarlyStopping(patience=3, restore_best_weights=True)
+                    tf.keras.callbacks.EarlyStopping(patience=3, monitor='val_loss', restore_best_weights=True)
                 ]
             )
             
-            # Extract embeddings
+            # 7. Sonuçları Kaydet
             user_embedding_layer = self.model.get_layer('user_embedding')
             self.user_embeddings = user_embedding_layer.get_weights()[0]
             
-            # Save everything
             self.model.save('dynamic_deep_model.h5')
             
+            # Genre mapping'i de kaydet
             save_data = {
                 'user_embeddings': self.user_embeddings,
                 'user_id_to_idx': self.user_id_to_idx,
                 'movie_id_to_idx': self.movie_id_to_idx,
                 'idx_to_user_id': self.idx_to_user_id,
-                'idx_to_movie_id': self.idx_to_movie_id
+                'idx_to_movie_id': self.idx_to_movie_id,
+                'genre_to_idx': self.genre_to_idx, # YENİ
+                'idx_to_genre': self.idx_to_genre  # YENİ
             }
             
             with open('user_embeddings.pkl', 'wb') as f:
                 pickle.dump(save_data, f)
             
-            self.logger.info(f"[+] Model trained! User embeddings shape: {self.user_embeddings.shape}")
+            self.logger.info(f"[+] Hibrit model başarıyla eğitildi ve kaydedildi! Embedding boyutu: {self.user_embeddings.shape}")
             return True
             
         except Exception as e:
-            self.logger.error(f"[x] Training failed: {e}")
+            self.logger.error(f"[x] Hibrit model eğitimi başarısız: {e}")
             import traceback
             traceback.print_exc()
             return False
@@ -248,10 +309,17 @@ class CleanDynamicDeepRecommender:
             self.logger.error(f"[x] Loading embeddings failed: {e}")
             return False
 
-    def find_similar_users(self, target_user_id: int) -> List[Dict]:
+    def find_similar_users(self, target_user_id: int, force_update: bool = False) -> List[Dict]:
         """10 benzer kullanıcı bul - GERÇEK DERİN ÖĞRENME"""
         
         try:
+            # Cache kontrolü
+            if not force_update and target_user_id in self.similarity_cache:
+                # Cache süresi kontrolü (örneğin 1 saat)
+                if (datetime.now() - self.last_cache_time.get(target_user_id, datetime.min)).total_seconds() < 3600:
+                    self.logger.info(f"[⚡] Returning cached similar users for {target_user_id}")
+                    return self.similarity_cache[target_user_id]
+
             # Embeddings yüklü mü kontrol et
             if self.user_embeddings is None:
                 if not self.load_embeddings():
@@ -284,6 +352,10 @@ class CleanDynamicDeepRecommender:
                         'embedding_vector': self.user_embeddings[idx].tolist()[:10]  # İlk 10 boyut
                     })
             
+            # Sonuçları cache'e kaydet
+            self.similarity_cache[target_user_id] = similar_users
+            self.last_cache_time[target_user_id] = datetime.now()
+            
             self.logger.info(f"[+] Found {len(similar_users)} similar users for user {target_user_id}")
             return similar_users
             
@@ -313,6 +385,8 @@ class CleanDynamicDeepRecommender:
                 ui.movie_id,
                 m.title,
                 m.genres,
+                m.imdb_score,
+                m.poster_url,  -- POSTER URL EKLENDI
                 AVG(
                     CASE 
                         WHEN JSON_EXTRACT(ui.extra_data, '$.rating') IS NOT NULL THEN
@@ -327,7 +401,7 @@ class CleanDynamicDeepRecommender:
             AND ui.interaction_type = 'rating'
             AND ui.extra_data IS NOT NULL
             AND m.title IS NOT NULL
-            GROUP BY ui.movie_id, m.title, m.genres
+            GROUP BY ui.movie_id, m.title, m.genres, m.imdb_score, m.poster_url
             ORDER BY avg_similar_rating DESC, rating_count DESC
             LIMIT ?
             """
@@ -382,7 +456,7 @@ class CleanDynamicDeepRecommender:
                 
                 # GUARANTEED FALLBACK: Alice'in izlemediği popüler filmler
                 guaranteed_query = """
-                SELECT m.id as movie_id, m.title, m.genres, 
+                SELECT m.id as movie_id, m.title, m.genres, m.imdb_score, m.poster_url,
                        COALESCE(m.avg_rating, 4.0) as avg_similar_rating, 
                        1 as rating_count
                 FROM movies m
@@ -410,12 +484,24 @@ class CleanDynamicDeepRecommender:
                         user_idx = self.user_id_to_idx[target_user_id] 
                         movie_idx = self.movie_id_to_idx[row['movie_id']]
                         
+                        # Özellikleri hazırla
+                        genre_feature = np.zeros((1, len(self.genre_to_idx)), dtype=np.float32)
+                        if 'genres' in row:
+                            genres_list = row['genres'].split('|') if isinstance(row['genres'], str) else row['genres']
+                            for g in genres_list:
+                                if g in self.genre_to_idx:
+                                    genre_feature[0, self.genre_to_idx[g]] = 1.0
+                        
+                        avg_rating_feature = np.array([[row['avg_similar_rating'] / 5.0]])
+                        imdb_score_feature = np.array([[float(row['imdb_score']) / 10.0 if pd.notna(row['imdb_score']) else 0.0]])
+                        
                         predicted_score = self.model.predict(
-                            [np.array([user_idx]), np.array([movie_idx])], 
+                            [np.array([user_idx]), np.array([movie_idx]), genre_feature, avg_rating_feature, imdb_score_feature], 
                             verbose=0
                         )[0][0] * 5.0
                         
                     except Exception as e:
+                        # self.logger.error(f"Prediction error: {e}")
                         predicted_score = row['avg_similar_rating']
                 else:
                     predicted_score = row['avg_similar_rating']
@@ -424,6 +510,8 @@ class CleanDynamicDeepRecommender:
                     'movie_id': int(row['movie_id']),
                     'title': row['title'],
                     'genres': row['genres'].split('|') if row['genres'] else [],
+                    'imdb_score': float(row['imdb_score']) if pd.notna(row['imdb_score']) else 0.0,
+                    'poster_url': row['poster_url'], # POSTER URL EKLENDI
                     'predicted_rating': float(predicted_score),
                     'similar_users_avg_rating': float(row['avg_similar_rating']),
                     'similar_users_count': int(row['rating_count']),

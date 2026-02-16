@@ -37,6 +37,7 @@ class Movie(Base):
     title = Column(String, nullable=False)
     release_date = Column(String)
     imdb_url = Column(String)
+    imdb_score = Column(Float, default=0.0)  # ← Yeni eklendi
     genres = Column(String)  # Virgülle ayrılmış türler
     
     # Genre flags (MovieLens binary indicators)

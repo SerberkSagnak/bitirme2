@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 40px; background-color: #f8f9fa; color: #343a40; }
+        h1, h2 { color: #007bff; }
+        .container { max-width: 1200px; margin: auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        #movie-form { margin-bottom: 30px; padding: 20px; border: 1px solid #dee2e6; border-radius: 8px; background-color: #f8f9fa; }
+        #movie-form input[type="text"], #movie-form input[type="date"] { display: block; width: calc(100% - 22px); padding: 10px; margin-bottom: 10px; border: 1px solid #ced4da; border-radius: 4px; }
+        #movie-form button { padding: 10px 20px; background-color: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; margin-top: 10px; }
+        #movie-form button:hover { background-color: #218838; }
+        #genres-container { margin-bottom: 10px; }
+        #genres-container label { margin-right: 15px; font-size: 14px; }
+        #movie-table { width: 100%; border-collapse: collapse; }
+        #movie-table th, #movie-table td { padding: 12px; border: 1px solid #dee2e6; text-align: left; }
+        #movie-table th { background-color: #007bff; color: white; }
+        #movie-table tr:nth-child(even) { background-color: #f2f2f2; }
+        .delete-btn { padding: 8px 12px; background-color: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        .delete-btn:hover { background-color: #c82333; }
+        #message-area { margin-top: 15px; padding: 10px; border-radius: 4px; text-align: center; font-weight: bold; }
+        .message-success { background-color: #d4edda; color: #155724; }
+        .message-error { background-color: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Admin Panel - Movie Management</h1>
+
+        <h2>Add New Movie</h2>
+        <div id="movie-form">
+            <input type="text" id="title" placeholder="Movie Title" required>
+            <div id="genres-container">
+                <strong>Genres:</strong><br>
+                <label><input type="checkbox" class="genre-checkbox" value="Action"> Action</label>
+                <label><input type="checkbox" class="genre-checkbox" value="Adventure"> Adventure</label>
+                <label><input type="checkbox" class="genre-checkbox" value="Animation"> Animation</label>
+                <label><input type="checkbox" class="genre-checkbox" value="Children's"> Children's</label>
+                <label><input type="checkbox" class="genre-checkbox" value="Comedy"> Comedy</label>
+                <label><input type="checkbox" class="genre-checkbox" value="Crime"> Crime</label>
+                <label><input type="checkbox" class="genre-checkbox" value="Documentary"> Documentary</label>
+                <label><input type="checkbox" class="genre-checkbox" value="Drama"> Drama</label>
+                <label><input type="checkbox" class="genre-checkbox" value="Fantasy"> Fantasy</label>
+                <label><input type="checkbox" class="genre-checkbox" value="Film-Noir"> Film-Noir</label>
+                <label><input type="checkbox" class="genre-checkbox" value="Horror"> Horror</label>
+                <label><input type="checkbox" class="genre-checkbox" value="Musical"> Musical</label>
+                <label><input type="checkbox" class="genre-checkbox" value="Mystery"> Mystery</label>
+                <label><input type="checkbox" class="genre-checkbox" value="Romance"> Romance</label>
+                <label><input type="checkbox" class="genre-checkbox" value="Sci-Fi"> Sci-Fi</label>
+                <label><input type="checkbox" class="genre-checkbox" value="Thriller"> Thriller</label>
+                <label><input type="checkbox" class="genre-checkbox" value="War"> War</label>
+                <label><input type="checkbox" class="genre-checkbox" value="Western"> Western</label>
+            </div>
+            <input type="date" id="release_date">
+            <input type="text" id="imdb_url" placeholder="IMDb URL">
+            <button onclick="addMovie()">Add Movie</button>
+        </div>
+        <div id="message-area"></div>
+
+        <h2>Movie List</h2>
+        <table id="movie-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Title</th>
+                    <th>Genres</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Movie rows will be inserted here by JavaScript -->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('authToken');
+        const messageArea = document.getElementById('message-area');
+
+        // Check for token on page load
+        if (!token) {
+            window.location.href = '/'; // Redirect to login if no token
+        }
+
+        async function fetchMovies() {
+            try {
+                const response = await fetch('/admin/movies', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!response.ok) {
+                    if (response.status === 401 || response.status === 403) {
+                        showMessage('Authentication error. Please log in again.', 'error');
+                        localStorage.removeItem('access_token');
+                        setTimeout(() => window.location.href = '/', 2000);
+                    }
+                    throw new Error('Failed to fetch movies.');
+                }
+                const data = await response.json();
+                const tableBody = document.getElementById('movie-table').getElementsByTagName('tbody')[0];
+                tableBody.innerHTML = ''; // Clear existing rows
+
+                data.movies.forEach(movie => {
+                    let row = tableBody.insertRow();
+                    row.innerHTML = `
+                        <td>${movie.id}</td>
+                        <td>${movie.title}</td>
+                        <td>${movie.genres}</td>
+                        <td><button class="delete-btn" onclick="deleteMovie(${movie.id})">Delete</button></td>
+                    `;
+                });
+            } catch (error) {
+                console.error('Error fetching movies:', error);
+                showMessage('Failed to load movies. Check console for details.', 'error');
+            }
+        }
+
+        async function addMovie() {
+            const title = document.getElementById('title').value;
+            const release_date = document.getElementById('release_date').value;
+            const imdb_url = document.getElementById('imdb_url').value;
+            
+            const selectedGenres = Array.from(document.querySelectorAll('.genre-checkbox:checked')).map(cb => cb.value);
+            const genres = selectedGenres.join('|');
+
+            if (!title || genres.length === 0) {
+                showMessage('Title and at least one genre are required.', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch('/admin/movies/add', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ title, genres, release_date, imdb_url })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showMessage(result.message, 'success');
+                    fetchMovies(); // Refresh the list
+                    document.getElementById('title').value = '';
+                    document.getElementById('release_date').value = '';
+                    document.getElementById('imdb_url').value = '';
+                    document.querySelectorAll('.genre-checkbox:checked').forEach(cb => cb.checked = false);
+                } else {
+                    showMessage(`Error: ${result.detail || 'Failed to add movie.'}`, 'error');
+                }
+            } catch (error) {
+                console.error('Error adding movie:', error);
+                showMessage('An unexpected error occurred.', 'error');
+            }
+        }
+
+        async function deleteMovie(movieId) {
+            if (!confirm(`Are you sure you want to delete movie ID ${movieId}?`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/admin/movies/${movieId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                const result = await response.json();
+
+                if (response.ok) {
+                    showMessage(result.message, 'success');
+                    fetchMovies(); // Refresh the list
+                } else {
+                    showMessage(`Error: ${result.detail || 'Failed to delete movie.'}`, 'error');
+                }
+            } catch (error) {
+                console.error('Error deleting movie:', error);
+                showMessage('An unexpected error occurred.', 'error');
+            }
+        }
+
+        function showMessage(message, type) {
+            messageArea.textContent = message;
+            messageArea.className = type === 'success' ? 'message-success' : 'message-error';
+            setTimeout(() => messageArea.textContent = '', 5000);
+        }
+
+        // Fetch movies when the page loads
+        document.addEventListener('DOMContentLoaded', fetchMovies);
+    </script>
+
+</body>
+</html>

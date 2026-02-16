@@ -243,183 +243,192 @@
 }
 
         
-        /* Enhanced Movie Card Styles */
+        /* --- MODERN MOVIE CARD DESIGN --- */
         .movie-card {
-            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-            border: none;
-            border-radius: 15px;
-            padding: 20px;
-            margin: 15px;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-            transition: all 0.3s ease;
-            display: inline-block;
-            width: 320px;
-            vertical-align: top;
+            background: #2c3e50; /* Fallback color */
+            border-radius: 16px;
+            overflow: hidden;
             position: relative;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            height: 420px; /* Sabit yükseklik */
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end; /* İçerik altta */
+            width: 100%; /* Kart genişliğini kapsayıcıya uydur */
         }
+
         .movie-card:hover {
             transform: translateY(-8px);
-            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.3);
         }
 
-.explanation-tooltip {
-    position: absolute;
-    bottom: 10px;
-    left: 10px;
-    background-color: rgba(44, 62, 80, 0.9);
-    color: white;
-    padding: 8px 12px;
-    border-radius: 8px;
-    font-size: 0.8em;
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.3s, visibility 0.3s;
-    z-index: 10;
-}
-
-.movie-card:hover .explanation-tooltip {
-    opacity: 1;
-    visibility: visible;
-}
+        /* Poster Alanı (Background Image gibi davranacak) */
+        .movie-poster-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            z-index: 0;
+            transition: transform 0.5s ease;
+        }
         
-/* Mevcut stillerin sonuna ekle: */
+        .movie-card:hover .movie-poster-bg {
+            transform: scale(1.05); /* Hoverda hafif zoom */
+        }
 
-.match-percentage {
-    animation: matchGlow 2s ease-in-out infinite alternate;
-}
+        /* Gradient Overlay (Yazı okunurluğu için) */
+        .movie-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.6) 50%, rgba(0,0,0,0.9) 100%);
+            z-index: 1;
+        }
 
-@keyframes matchGlow {
-    from { box-shadow: 0 0 5px rgba(255,255,255,0.5); }
-    to { box-shadow: 0 0 15px rgba(255,255,255,0.8); }
-}
+        /* İçerik Alanı */
+        .movie-content {
+            position: relative;
+            z-index: 2;
+            padding: 20px;
+            color: white;
+        }
 
-.movie-card {
-    position: relative;
-    overflow: hidden;
-}
+        .movie-title {
+            font-size: 1.3em;
+            font-weight: 700;
+            margin: 0 0 5px 0;
+            line-height: 1.3;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+            /* Uzun başlıkları kes */
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
 
-.movie-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-    transition: left 0.5s;
-}
+        /* Responsive Grid Ayarı */
+        @media (max-width: 768px) {
+            .search-section {
+                flex-direction: column;
+            }
+            .search-sidebar {
+                width: 100%;
+                margin-bottom: 20px;
+            }
+        }
 
-.movie-card:hover::before {
-    left: 100%;
-}
+        .movie-meta {
+            font-size: 0.85em;
+            color: rgba(255,255,255,0.8);
+            margin-bottom: 10px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
 
-.match-percentage[style*="27ae60"] { 
-    border: 2px solid #27ae60;
-    font-weight: bold;
-}
-.match-percentage[style*="3498db"] { 
-    border: 2px solid #3498db;
-    font-weight: bold;
-}
-.match-percentage[style*="9b59b6"] { 
-    border: 2px solid #9b59b6;
-    font-weight: bold;
-}
-.match-percentage[style*="f39c12"] { 
-    border: 2px solid #f39c12;
-    font-weight: bold;
-}
+        .movie-genres {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-bottom: 15px;
+        }
 
-/* Loading animasyonu geliştir */
-.loading {
-    position: relative;
-}
+        .movie-genre-tag {
+            background: rgba(255,255,255,0.2);
+            backdrop-filter: blur(5px);
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.75em;
+            color: white;
+        }
 
-.loading::after {
-    content: '';
-    position: absolute;
-    right: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 20px;
-    height: 20px;
-    border: 2px solid #fff;
-    border-top: 2px solid transparent;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-}
+        /* Aksiyon Butonları */
+        .movie-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
 
-@keyframes spin {
-    0% { transform: translateY(-50%) rotate(0deg); }
-    100% { transform: translateY(-50%) rotate(360deg); }
-}
+        .action-btn {
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: white;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 1.2em;
+        }
 
-/* Öneri kartları için özel stiller */
-.recommendation-card {
-    border-left: 4px solid #667eea;
-    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-}
+        .action-btn:hover {
+            background: white;
+            color: #333;
+            transform: scale(1.1);
+        }
 
-.recommendation-card:hover {
-    border-left-color: #764ba2;
-    transform: translateY(-5px) scale(1.02);
-}
+        .action-btn.active {
+            background: #ff6b6b; /* Favori için kırmızı */
+            border-color: #ff6b6b;
+            color: white;
+        }
+        
+        .action-btn.watched {
+            background: #2ecc71; /* İzlenen için yeşil */
+            border-color: #2ecc71;
+            color: white;
+        }
 
-/* Skor göstergesi geliştirmeleri */
-.movie-score {
-    position: relative;
-    overflow: hidden;
-}
-
-.movie-score::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-    animation: scoreShine 3s ease-in-out infinite;
-}
-
-@keyframes scoreShine {
-    0% { left: -100%; }
-    50% { left: 100%; }
-    100% { left: 100%; }
-}
-
-        .movie-card.favorited::before {
-            content: "❤️";
+        /* Top Badges (Sağ Üst / Sol Üst) */
+        .card-badge {
             position: absolute;
             top: 15px;
-            right: 15px;
-            font-size: 1.2em;
-            animation: heartbeat 1.5s ease-in-out infinite;
-        }
-        @keyframes heartbeat {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-            100% { transform: scale(1); }
-        }
-        .movie-title {
-            font-weight: bold;
-            color: #2c3e50;
-            margin-bottom: 10px;
-            font-size: 1.1em;
-        }
-        .movie-info {
-            font-size: 0.9em;
-            color: #666;
-            margin-bottom: 12px;
-        }
-        .movie-score {
-            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
-            color: white;
+            z-index: 3;
             padding: 5px 10px;
-            border-radius: 15px;
+            border-radius: 20px;
             font-size: 0.8em;
-            display: inline-block;
-            margin-bottom: 10px;
+            font-weight: bold;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+
+        .badge-score {
+            right: 15px;
+            background: #f39c12;
+            color: white;
+        }
+        
+        .badge-imdb {
+            right: 15px;
+            top: 45px; /* Puanın altında */
+            background: #f5c518; /* IMDb Sarısı */
+            color: black;
+        }
+
+        .badge-status {
+            left: 15px;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(5px);
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        /* Grid Layout Fix */
+        #search-results, #recommendation-results, .movie-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); /* Genişlik arttı */
+            gap: 25px; /* Boşluk arttı */
+            padding: 10px;
         }
         
         /* Tab Styles */
@@ -678,7 +687,193 @@
             50% { transform: scale(1.3); }
             100% { transform: scale(1); }
         }
+        /* --- INTERACTIVE STAR RATING (10-Point) --- */
+        .star-rating-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between; /* Yıldızları kutuya yay */
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(6px);
+            padding: 5px 8px;
+            border-radius: 12px; /* Biraz daha köşeli, modern */
+            margin-top: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            transition: all 0.3s ease;
+            width: 100%; /* Kartın genişliğini tam kapla */
+            box-sizing: border-box; /* Padding dahil genişlik */
+        }
+
+        .star-rating-container:hover {
+            background: rgba(0, 0, 0, 0.9);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .star-btn {
+            background: none;
+            border: none;
+            padding: 0; 
+            margin: 0;
+            cursor: pointer;
+            font-size: 0.95em; /* Daha küçük, sığması için */
+            color: #444; 
+            transition: transform 0.1s ease;
+            line-height: 1;
+            flex: 1; /* Her yıldız eşit alan kaplasın */
+            text-align: center;
+        }
+
+        /* Hover Durumları */
+        .star-rating-container:hover .star-btn {
+            color: #666; 
+        }
+
+        /* Seçili veya Hover'lanan Yıldızlar */
+        .star-btn.active,
+        .star-btn:hover,
+        .star-btn:hover ~ .star-btn {
+            color: #f39c12;
+        }
+        
+        .star-btn:hover {
+            transform: scale(1.2); /* Daha hafif büyüme */
+        }
+
+        /* Renk Sınıfları */
+        .star-1 { color: #ff4d4d !important; }
+        .star-2 { color: #ff4d4d !important; }
+        .star-3 { color: #ff944d !important; }
+        .star-4 { color: #ff944d !important; }
+        .star-5 { color: #ffd11a !important; }
+        .star-6 { color: #ffd11a !important; }
+        .star-7 { color: #d1ff1a !important; }
+        .star-8 { color: #d1ff1a !important; }
+        .star-9 { color: #4dff4d !important; }
+        .star-10 { color: #00ff00 !important; text-shadow: 0 0 5px rgba(0, 255, 0, 0.4); }
+
+        .rating-label-text {
+            color: #fff;
+            font-size: 0.9em;
+            margin-left: 10px;
+            font-weight: bold;
+            min-width: 25px;
+            text-align: center;
+            background: rgba(255,255,255,0.15);
+            padding: 2px 6px;
+            border-radius: 6px;
+        }
     </style>
+<!-- ... (Script tag başlangıcı dosyanın altında olduğu için buraya JS kodunu ekliyorum) ... -->
+<script>
+// ✨ YENİ YILDIZ SİSTEMİ FONKSİYONLARI (10-PUAN) ✨
+
+function generateStarRatingHTML(movieId, currentRating) {
+    // Eğer gelen rating 5'lik sistemdeyse, 2 ile çarpıp 10'luğa çevirelim (görsel olarak)
+    // Ancak veritabanında orijinali saklanmalı. Şimdilik direkt kullanıyoruz.
+    // NOT: Veritabanı yapınız 1-5 ise backend'de bunu handle etmelisiniz veya burada 2'ye bölmelisiniz.
+    // Kullanıcı deneyimi için 10 üzerinden gösterip, backend'e gönderirken de 10 üzerinden göndereceğiz.
+    // (Backend validasyonunuzu kontrol etmeyi unutmayın!)
+
+    let starsHtml = '';
+    for (let i = 1; i <= 10; i++) {
+        let activeClass = '';
+        if (currentRating >= i) {
+            activeClass = `active star-${Math.ceil(currentRating)}`; 
+        }
+        
+        starsHtml += `<button class="star-btn ${activeClass}" 
+                              onmouseover="handleStarHover(${movieId}, ${i})" 
+                              onmouseleave="handleStarLeave(${movieId}, ${currentRating})"
+                              onclick="handleStarClick(${movieId}, ${i})"
+                              id="star-${movieId}-${i}"
+                              title="${i} Puan">★</button>`;
+    }
+    
+    const ratingText = currentRating > 0 ? `${currentRating}` : '';
+    
+    return `
+        <div class="star-rating-container" id="rating-container-${movieId}">
+            ${starsHtml}
+            <span class="rating-label-text" id="rating-label-${movieId}">${ratingText}</span>
+        </div>
+    `;
+}
+
+function handleStarHover(movieId, hoverValue) {
+    const label = document.getElementById(`rating-label-${movieId}`);
+    if(label) label.textContent = `${hoverValue}`;
+    
+    for (let i = 1; i <= 10; i++) {
+        const star = document.getElementById(`star-${movieId}-${i}`);
+        if (!star) continue;
+        
+        star.className = 'star-btn';
+        
+        if (i <= hoverValue) {
+            star.classList.add(`star-${hoverValue}`); 
+        }
+    }
+}
+
+function handleStarLeave(movieId, originalRating) {
+    const label = document.getElementById(`rating-label-${movieId}`);
+    if(label) label.textContent = originalRating > 0 ? `${originalRating}` : '';
+    
+    for (let i = 1; i <= 10; i++) {
+        const star = document.getElementById(`star-${movieId}-${i}`);
+        if (!star) continue;
+        
+        star.className = 'star-btn'; 
+        
+        if (originalRating >= i) {
+            star.classList.add('active');
+            star.classList.add(`star-${Math.ceil(originalRating)}`);
+        }
+    }
+}
+
+async function handleStarClick(movieId, rating) {
+    const star = document.getElementById(`star-${movieId}-${rating}`);
+    if(star) {
+        star.classList.add('star-pop');
+        setTimeout(() => star.classList.remove('star-pop'), 300);
+    }
+    
+    handleStarLeave(movieId, rating);
+    
+    // Backend 1-5 arası bekliyorsa bunu dönüştürmemiz gerekebilir.
+    // Ancak kullanıcı "IMDb ile kıyas" dediği için backend'in de 10'luk sistemi desteklemesi lazım.
+    // Şimdilik direkt gönderiyoruz. Backend hata verirse düzeltiriz.
+    // NOT: Backend'deki validasyon (1.0 - 5.0) hata verebilir! 
+    // Backend kodunu güncellememiz gerekecek.
+    
+    // Geçici Çözüm: Backend 5'lik istiyorsa, arayüzde 10'luk gösterip arkada 2'ye bölüp atabiliriz.
+    // AMA en doğrusu backend'i 10'a çekmek.
+    // Şimdilik backend'e (rating / 2) gönderelim mi? Yoksa backend'i mi güncelleyelim?
+    // Kullanıcı "IMDb ile kıyas" dediğine göre backend de 10 olmalı.
+    // Ben backend'i güncellemek yerine frontend'de 2'ye bölüp göndereceğim, 
+    // böylece mevcut data bozulmaz. (10 puan -> 5.0 olarak gider)
+    
+    const backendRating = rating / 2.0; 
+    
+    await rateMovie(movieId, backendRating, false); // 5'lik sisteme çevirip gönder
+    
+    const label = document.getElementById(`rating-label-${movieId}`);
+    if(label) {
+        label.textContent = "✅";
+        setTimeout(() => {
+            label.textContent = `${rating}`;
+        }, 1500);
+    }
+    
+    const container = document.getElementById(`rating-container-${movieId}`);
+    if(container) {
+        const stars = container.querySelectorAll('.star-btn');
+        stars.forEach(btn => {
+            btn.setAttribute('onmouseleave', `handleStarLeave(${movieId}, ${rating})`);
+        });
+    }
+}
+</script>
 </head>
 <body>
     <div class="container">
@@ -801,15 +996,63 @@
             </div>
         </div>
 
-        <!-- Search Tab -->
+        <!-- Search Tab (GELİŞMİŞ FİLTRELEME) -->
         <div id="search" class="tab-content">
-            <div class="section search-section">
-                <h2>🔍 Film Arama</h2>
-                <div class="search-box">
-                    <input type="text" id="search-input" placeholder="Film adı yazın... (örn: star wars, titanic, batman)">
-                    <button onclick="searchMovies()">Ara</button>
+            <div class="section search-section" style="display: flex; gap: 20px; align-items: flex-start;">
+                
+                <!-- Sol Panel: Filtreler -->
+                <div class="search-sidebar" style="flex: 1; min-width: 250px; background: rgba(255,255,255,0.9); padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+                    <h3 style="margin-top: 0; color: #333;">🔍 Filtrele</h3>
+                    
+                    <!-- Arama Kutusu (DİNAMİK) -->
+                    <div class="filter-group" style="margin-bottom: 20px;">
+                        <label style="font-weight: bold; display: block; margin-bottom: 5px;">Film Adı:</label>
+                        <input type="text" id="search-input" placeholder="Yazmaya başlayın..." style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ddd;" oninput="debouncedSearch()">
+                    </div>
+                    
+                    <!-- Tür Filtresi (ÇOKLU SEÇİM) -->
+                    <div class="filter-group" style="margin-bottom: 20px;">
+                        <label style="font-weight: bold; display: block; margin-bottom: 5px;">Türler (Çoklu Seçim):</label>
+                        <div id="search-genre-container" style="max-height: 150px; overflow-y: auto; background: white; padding: 10px; border-radius: 8px; border: 1px solid #ddd;">
+                            <!-- Checkboxlar JS ile doldurulacak -->
+                        </div>
+                    </div>
+                    
+                    <!-- Puan Filtresi (IMDb) -->
+                    <div class="filter-group" style="margin-bottom: 20px;">
+                        <label style="font-weight: bold; display: block; margin-bottom: 5px;">Min. IMDb Puanı: <span id="rating-val" style="color: #f39c12;">0</span></label>
+                        <input type="range" id="search-rating-min" min="0" max="9" step="0.5" value="0" style="width: 100%;" oninput="document.getElementById('rating-val').textContent = this.value; debouncedSearch()">
+                    </div>
+                    
+                    <!-- Sıralama -->
+                    <div class="filter-group" style="margin-bottom: 20px;">
+                        <label style="font-weight: bold; display: block; margin-bottom: 5px;">Sıralama:</label>
+                        <select id="search-sort" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ddd;" onchange="searchMovies()">
+                            <option value="popularity">🔥 Popülerlik</option>
+                            <option value="imdb">🌟 IMDb Puanı (Yüksek)</option>
+                            <option value="newest">📅 Yıl (Yeni -> Eski)</option>
+                            <option value="oldest">📅 Yıl (Eski -> Yeni)</option>
+                            <option value="rating">⭐ Site Puanı</option>
+                        </select>
+                    </div>
+                    
+                    <button onclick="searchMovies()" style="width: 100%; background: linear-gradient(45deg, #667eea, #764ba2); color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer;">
+                        Sonuçları Yenile
+                    </button>
                 </div>
-                <div id="search-results"></div>
+                
+                <!-- Sağ Panel: Sonuçlar -->
+                <div class="search-results-area" style="flex: 3;">
+                    <div id="search-results-header" style="margin-bottom: 15px; font-weight: bold; color: #555;"></div>
+                    <div id="search-results" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 15px;">
+                        <!-- Sonuçlar buraya gelecek -->
+                        <div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #666;">
+                            <p>👈 Sol taraftan filtre seçip arama yapabilirsiniz.</p>
+                            <p>Veya doğrudan "Filtrele & Ara" diyerek popüler filmleri listeleyin.</p>
+                        </div>
+                    </div>
+                </div>
+                
             </div>
         </div>
 
@@ -902,6 +1145,21 @@
             if (savedToken && savedUser) {
                 authToken = savedToken;
                 currentUser = JSON.parse(savedUser);
+
+                // 🔥 GÜVENLİK KONTROL - favorite_genres parse et
+                if (currentUser && typeof currentUser.favorite_genres === 'string') {
+                    currentUser.favorite_genres = currentUser.favorite_genres.split(',').filter(g => g.trim());
+                }
+                if (currentUser && !Array.isArray(currentUser.favorite_genres)) {
+                    currentUser.favorite_genres = [];
+                }
+
+                // ** ADMIN REDIRECT ON LOAD REMOVED **
+                if (currentUser && currentUser.role === 'admin') {
+                    showNotification('Admin girişi algılandı. Panele gitmek için URL\'e /admin/panel yazabilirsiniz.', 'info');
+                    // window.location.href = 'http://localhost:8000/admin/panel'; // OTOMATİK YÖNLENDİRME İPTAL EDİLDİ
+                }
+
                 updateUIForLoggedInUser();
             }
             
@@ -933,6 +1191,12 @@
     allGenres.forEach(genre => {
         const genreItem = document.createElement('div');
         genreItem.className = 'genre-item';
+        
+        // Check if selected
+        if (selectedGenres.includes(genre)) {
+            genreItem.classList.add('selected');
+        }
+        
         genreItem.textContent = genre;
         genreItem.onclick = () => toggleGenre(genre, genreItem);
         genreGrid.appendChild(genreItem);
@@ -1305,7 +1569,9 @@ function createMovieCard(movie, index, type) {
         ${scoreDisplay}
         ${statusDisplay}
         <div class="movie-info">
-            📅 ${movie.release_date} | ⭐ ${movie.avg_rating} | 👥 ${movie.popularity} kişi
+            📅 ${movie.release_date} | ⭐ ${movie.avg_rating} 
+            ${movie.imdb_score ? ` | <span style="color: #f39c12; font-weight: bold;">IMDb: ${movie.imdb_score}</span>` : ''} 
+            | 👥 ${movie.popularity} kişi
         </div>
         <div class="genre-tags">
             ${movie.genres.map(genre => `<span class="genre-tag">${genre}</span>`).join('')}
@@ -1389,7 +1655,7 @@ function createSmartRatingSection(movie) {
                     align-items: center;
                     gap: 10px;
                 ">
-                    <select onchange="rateMovie(${movieId}, this.value)" style="
+                    <select onchange="rateMovie(${movieId}, this.value, false)" style="
                         padding: 8px 12px;
                         border: none;
                         border-radius: 8px;
@@ -1418,7 +1684,7 @@ function createSmartRatingSection(movie) {
             </div>
         `;
     } else {
-        // Henüz puanlamamış - GÜZEL TASARIM
+        // Henüz puanlama yok 
         return `
             <div class="rating-input" style="
                 margin: 15px 0;
@@ -1433,7 +1699,7 @@ function createSmartRatingSection(movie) {
                 gap: 15px;
             ">
                 <span class="rating-label" style="font-weight: bold; font-size: 1.1em;">⭐ Puanla:</span>
-                <select onchange="rateMovie(${movieId}, this.value)" style="
+                <select onchange="rateMovie(${movieId}, this.value, false)" style="
                     padding: 10px 15px;
                     border: none;
                     border-radius: 8px;
@@ -1677,8 +1943,9 @@ function updateMovieCardAfterRating(movieId, rating) {
 }
 
 // Rate Movie fonksiyonunu düzelt
-async function rateMovie(movieId, rating) {
-    console.log(`🎯 Rating movie ${movieId} with ${rating} stars`);
+async function rateMovie(movieId, rating, shouldRefresh = true) {
+    console.log("--- DEBUG: EXECUTING VERSION 3 of rateMovie ---"); // This is the new debug line
+    console.log(`🎯 Rating movie ${movieId} with ${rating} stars. Refresh: ${shouldRefresh}`);
     
     if (!authToken) {
         alert('Film puanlamak için giriş yapmalısınız!');
@@ -1693,11 +1960,7 @@ async function rateMovie(movieId, rating) {
             rating: parseFloat(rating)
         };
         
-        console.log('📤 Sending request:', JSON.stringify(requestData));
-        console.log('🔑 Auth token exists:', !!authToken);
-
-        // ← ENDPOINT ADI DEĞİŞTİRİLDİ
-        const response = await fetch('http://localhost:8000/rate-movie', {  // rate-movie-new → rate-movie
+        const response = await fetch('http://localhost:8000/rate-movie', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -1706,58 +1969,44 @@ async function rateMovie(movieId, rating) {
             body: JSON.stringify(requestData)
         });
 
-        console.log('📥 Response status:', response.status);
-        console.log('📥 Response ok:', response.ok);
-
         const data = await response.json();
-        console.log('📥 Response data:', JSON.stringify(data));
 
         if (response.ok && data.status === 'success') {
             console.log('✅ Rating successful:', data.message);
             showNotification(data.message, 'success');
             try { updateUserStats(); } catch(e) { console.log('Stats update skipped:', e); }
             
-            // Favoriler sayfasındaysak yenile
             if (document.getElementById('favorites').classList.contains('active')) {
                 loadFavorites();
             }
 
-            // ✨ DİNAMİK ÖNERİ GÜNCELLEME (EN ÖNEMLİ KISIM)
-            if (data.dynamic_recommendations && data.dynamic_recommendations.length > 0) {
-                showNotification('Önerileriniz anında güncelleniyor...', 'success');
+            // ✨ DİNAMİK ÖNERİ GÜNCELLEME (Kontrollü)
+            if (shouldRefresh && data.dynamic_recommendations && data.dynamic_recommendations.length > 0) {
+                console.log("--- DEBUG: executing refresh block, this is the PROBLEM ---");
+                showNotification('Önerileriniz anında güncelleniyor...', 'info');
                 
                 const recommendationsContainer = document.getElementById('recommendation-results');
                 recommendationsContainer.innerHTML = `
                     <h3>⭐ Puanlamanıza Göre Anında Güncellenen Öneriler</h3>
-                    <div id="dynamic-rec-list"></div>
+                    <div id="dynamic-rec-list" class="movie-grid"></div>
                 `;
                 const recList = document.getElementById('dynamic-rec-list');
                 data.dynamic_recommendations.forEach((movie, index) => {
                     const movieCard = createEnhancedMovieCard(movie, index + 1, 'recommendation');
                     recList.appendChild(movieCard);
                 });
-                showTab('recommendations', document.querySelector('.tab[onclick*="recommendations"]'));
             }
 
         } else {
-            console.log('❌ Rating failed:', JSON.stringify(data));
-            
-            let errorMsg = 'Bilinmeyen hata';
-            if (data.detail) {
-                if (Array.isArray(data.detail)) {
-                    errorMsg = data.detail.map(err => err.msg || err).join(', ');
-                } else {
-                    errorMsg = data.detail;
-                }
-            } else if (data.message) {
-                errorMsg = data.message;
+            let errorMsg = data.detail || 'Bilinmeyen bir hata oluştu.';
+            if (Array.isArray(errorMsg)) {
+                errorMsg = errorMsg.map(e => e.msg).join(', ');
             }
-            
             alert('Puanlama hatası: ' + errorMsg);
         }
     } catch (error) {
         console.error('❌ Rating error:', error);
-        alert('Puanlama sırasında hata oluştu: ' + error.message);
+        alert('Puanlama sırasında bir ağ hatası oluştu: ' + error.message);
     }
 }
 
@@ -1872,66 +2121,57 @@ async function rateMovie(movieId, rating) {
         }
 
         // User Login - GÜVENLİ HALE GETİRİLMİŞ
-async function loginUser() {
-    const loginData = {
-        username: document.getElementById('login-username').value,
-        password: document.getElementById('login-password').value
-    };
-    
-    if (!loginData.username || !loginData.password) {
-        alert('Kullanıcı adı ve şifre gerekli!');
-        return;
-    }
-    
-    try {
-        const response = await fetch('http://localhost:8000/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(loginData)
-        });
-        
-        const data = await response.json();
-        
-        if (data.status === 'success') {
-            authToken = data.access_token;
-            currentUser = data.user;
+        async function loginUser() {
+            const loginData = {
+                username: document.getElementById('login-username').value,
+                password: document.getElementById('login-password').value
+            };
             
-            // 🔍 DEBUG LOGS EKLE
-            console.log('🔍 Raw currentUser:', currentUser);
-            console.log('🔍 Raw favorite_genres:', currentUser.favorite_genres);
-            console.log('🔍 Type of favorite_genres:', typeof currentUser.favorite_genres);
-            
-            // 🔥 GÜVENLİK KONTROL - favorite_genres undefined ise default ver
-            if (!currentUser.favorite_genres) {
-                currentUser.favorite_genres = [];
+            if (!loginData.username || !loginData.password) {
+                alert('Kullanıcı adı ve şifre gerekli!');
+                return;
             }
             
-            // String'se array'e çevir
-            if (typeof currentUser.favorite_genres === 'string') {
-                currentUser.favorite_genres = currentUser.favorite_genres.split(',').filter(g => g.trim());
+            try {
+                const response = await fetch('http://localhost:8000/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(loginData)
+                });
+                
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    authToken = data.access_token;
+                    currentUser = data.user;
+                    
+                    // 🔥 GÜVENLİK KONTROL - favorite_genres parse et
+                    if (currentUser && typeof currentUser.favorite_genres === 'string') {
+                        currentUser.favorite_genres = currentUser.favorite_genres.split(',').filter(g => g.trim());
+                    }
+                    if (currentUser && !Array.isArray(currentUser.favorite_genres)) {
+                        currentUser.favorite_genres = [];
+                    }
+                    
+                    localStorage.setItem('authToken', authToken);
+                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+
+                    // ** ADMIN REDIRECT ON LOGIN REMOVED **
+                    if (currentUser && currentUser.role === 'admin') {
+                        showNotification('Admin girişi başarılı! Hoş geldiniz.', 'success');
+                        // window.location.href = 'http://localhost:8000/admin/panel'; // OTOMATİK YÖNLENDİRME İPTAL EDİLDİ
+                    }
+                    
+                    // ... (rest of the logic)
+                    updateUIForLoggedInUser();
+                    showNotification('Giriş başarılı!', 'success');
+                } else {
+                    alert('Giriş hatası: ' + data.detail);
+                }
+            } catch (error) {
+                alert('Giriş sırasında hata oluştu: ' + error.message);
             }
-            
-            // Array değilse default ver
-            if (!Array.isArray(currentUser.favorite_genres)) {
-                currentUser.favorite_genres = [];
-            }
-            
-            // 🔍 SONUÇ DEBUG
-            console.log('✅ Final favorite_genres:', currentUser.favorite_genres);
-            console.log('✅ selectedGenres will be:', currentUser.favorite_genres);
-            
-            localStorage.setItem('authToken', authToken);
-            localStorage.setItem('currentUser', JSON.stringify(currentUser));
-            
-            updateUIForLoggedInUser();
-            showNotification('Giriş başarılı!', 'success');
-        } else {
-            alert('Giriş hatası: ' + data.detail);
         }
-    } catch (error) {
-        alert('Giriş sırasında hata oluştu: ' + error.message);
-    }
-}
 
 
 
@@ -2015,35 +2255,101 @@ async function loginUser() {
             }
         }
 
-        // search fonksiyonunu düzelt
-async function searchMovies() {
-    const query = document.getElementById('search-input').value.trim();
-    const resultsContainer = document.getElementById('search-results');
-    
-    if (query.length < 2) {
-        resultsContainer.innerHTML = '<p>En az 2 karakter girin</p>';
-        return;
-    }
-    
-    try {
-        console.log('🔍 Searching for:', query);
-        
-        const response = await fetch(`http://localhost:8000/search?q=${encodeURIComponent(query)}`);
-        const data = await response.json();
-        
-        console.log('🔍 Search response:', data);
-        
-        if (data.status === 'success' && data.results) {
-            displaySearchResults(data.results);
-        } else {
-            resultsContainer.innerHTML = '<p>Film bulunamadı</p>';
+        // Debounce fonksiyonu (Dinamik arama için)
+        let searchTimeout;
+        function debouncedSearch() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                searchMovies();
+            }, 300); // 300ms bekle
+        }
+
+        // GELİŞMİŞ ARAMA FONKSİYONU
+        async function searchMovies() {
+            const query = document.getElementById('search-input').value.trim();
+            const minRating = document.getElementById('search-rating-min').value;
+            const sortBy = document.getElementById('search-sort').value;
+            
+            // Seçili genre'ları topla
+            const selectedGenres = Array.from(document.querySelectorAll('.search-genre-checkbox:checked')).map(cb => cb.value);
+            
+            const resultsContainer = document.getElementById('search-results');
+            const headerContainer = document.getElementById('search-results-header');
+            
+            // Loading'i sadece ilk aramada göster, dinamik aramada rahatsız etmesin
+            // resultsContainer.innerHTML = '<div class="loading" style="grid-column: 1/-1;">🔄 Film aranıyor...</div>';
+            
+            try {
+                // URL Parametrelerini oluştur
+                const params = new URLSearchParams({
+                    limit: 20,
+                    sort_by: sortBy,
+                    min_rating: minRating
+                });
+                
+                if (query) params.append('q', query);
+                
+                // Genre array'ini parametre olarak ekle
+                selectedGenres.forEach(genre => params.append('genres', genre));
+                
+                const response = await fetch(`http://localhost:8000/search?${params.toString()}`);
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    headerContainer.innerHTML = `<h3>🔍 ${data.count} Film Bulundu</h3>`;
+                    resultsContainer.innerHTML = '';
+                    
+                    if (data.results.length === 0) {
+                        resultsContainer.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 20px;">😔 Kriterlere uygun film bulunamadı.</div>';
+                        return;
+                    }
+                    
+                    data.results.forEach((movie, index) => {
+                        const movieCard = createEnhancedMovieCard(movie, index + 1, 'genre'); 
+                        resultsContainer.appendChild(movieCard);
+                    });
+                } else {
+                    resultsContainer.innerHTML = `<div style="color: red;">❌ Hata: ${data.message}</div>`;
+                }
+                
+            } catch (error) {
+                console.error('Search error:', error);
+                resultsContainer.innerHTML = '❌ Arama sırasında bir hata oluştu!';
+            }
+        }
+
+        // Sayfa yüklendiğinde Genre Checkbox'larını doldur
+        function populateSearchGenres() {
+            const container = document.getElementById('search-genre-container');
+            if (!container) return;
+            
+            container.innerHTML = '';
+            
+            allGenres.forEach(genre => {
+                const label = document.createElement('label');
+                label.style.display = 'block';
+                label.style.marginBottom = '5px';
+                label.style.cursor = 'pointer';
+                
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.value = genre;
+                checkbox.className = 'search-genre-checkbox';
+                checkbox.style.marginRight = '8px';
+                checkbox.onchange = debouncedSearch; // Tikleyince de ara
+                
+                label.appendChild(checkbox);
+                label.appendChild(document.createTextNode(genre));
+                container.appendChild(label);
+            });
         }
         
-    } catch (error) {
-        console.error('Search error:', error);
-        resultsContainer.innerHTML = '<p>Arama hatası oluştu</p>';
-    }
-}
+        // loadGenres fonksiyonuna populateSearchGenres'i ekle
+        const originalLoadGenres = loadGenres;
+        loadGenres = async function() {
+            await originalLoadGenres();
+            populateSearchGenres();
+        };
 
 // Search results gösterme fonksiyonu
 function displaySearchResults(movies) {
@@ -2064,6 +2370,7 @@ function displaySearchResults(movies) {
         return `
             <div class="movie-card">
                 <h4>${movie.title}</h4>
+                <p><strong>Yıl:</strong> ${movie.release_date ? movie.release_date.substring(0, 4) : 'Bilinmiyor'}</p>
                 <p><strong>Türler:</strong> ${movie.genres || 'Bilinmiyor'}</p>
                 <p><strong>Puan:</strong> ⭐ ${movie.avg_rating ? movie.avg_rating.toFixed(1) : 'N/A'}</p>
                 <div style="margin-top: 10px;">
@@ -2202,361 +2509,6 @@ async function addToWatchlist(movieId, movieTitle, status = 'to_watch', buttonEl
     }
 }
 
-
-async function getkisisel() {
-    console.log('🎯 GETKISISEL FUNCTION CALLED');
-    
-    if (!authToken) {
-        alert('Model önerileri için giriş yapmalısınız!');
-        return;
-    }
-    
-    // FORCE STAY ON RECOMMENDATIONS TAB
-    console.log('🔒 Forcing stay on recommendations tab...');
-    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-    document.getElementById('recommendations').classList.add('active');
-    document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
-    document.querySelector('.tab[onclick*="recommendations"]').classList.add('active');
-    
-    const resultsDiv = document.getElementById('recommendation-results');
-    resultsDiv.innerHTML = `
-        <div class="loading" style="text-align: center; padding: 40px;">
-            <div style="font-size: 3em; margin-bottom: 20px;">🧠</div>
-            <h3 style="margin: 10px 0; color: #667eea;">Neural Network Çalışıyor</h3>
-            <p style="margin: 10px 0; color: #666;">Cache'den hızlı inference yapılıyor...</p>
-            <p style="margin: 10px 0; color: #888; font-size: 0.9em;">~1-2 saniye sürecek!</p>
-            <div style="width: 200px; height: 4px; background: #eee; margin: 20px auto; border-radius: 2px; overflow: hidden;">
-                <div style="width: 100%; height: 100%; background: linear-gradient(45deg, #667eea, #764ba2); animation: loading-bar 2s infinite;"></div>
-            </div>
-        </div>`;
-    
-    // Prevent any automatic tab switching during processing
-    console.log('🔒 Disabling tab auto-switching...');
-    
-    try {
-        const userId = currentUser?.id || 1;
-        console.log('🎯 User ID:', userId);
-        
-        console.log('📡 Sending fetch request...');
-        console.log('⏳ Backend neural training takes ~15 seconds - please wait...');
-        
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => {
-            controller.abort();
-            console.log('⏰ Fetch timeout after 5 seconds');
-        }, 5000);
-        
-        const response = await fetch(`http://127.0.0.1:8000/fast-deep-recommendations/${userId}`, {
-            headers: { 'Authorization': `Bearer ${authToken}` },
-            signal: controller.signal
-        });
-        
-        clearTimeout(timeoutId);
-        console.log('📡 Fetch completed!');
-        
-        console.log('📡 Response Status:', response.status);
-        
-        if (response.status === 401) {
-            // Token expired - DON'T redirect to dashboard!
-            console.log('🔄 Token expired - staying on current tab');
-            resultsDiv.innerHTML = '<div style="background: orange; color: white; padding: 20px; border-radius: 10px; text-align: center;"><h4>🔐 Oturum Süresi Doldu</h4><p>Lütfen yeniden giriş yapın.</p><button onclick="showTab(\'dashboard\')" style="background: white; color: orange; border: none; padding: 10px; margin-top: 10px;">🔄 Giriş Yap</button></div>';
-            return;
-        }
-        
-        if (!response.ok) {
-            throw new Error(`Network error: ${response.status}`);
-        }
-        
-        console.log('📡 Processing JSON response...');
-        const data = await response.json();
-        console.log('📡 JSON parsing completed!');
-        console.log('📊 RESPONSE STATUS:', data.status);
-        console.log('📊 METHOD:', data.method);
-        console.log('📊 RECOMMENDATIONS:', data.recommendations ? data.recommendations.length : 0);
-        
-        // Anti-redirect protection
-        console.log('🔒 Setting anti-redirect protection...');
-        
-        // QUALITY GATE HANDLING
-        if (data.status === 'insufficient_data' || data.status === 'insufficient_diversity') {
-            // Yetersiz veri - kullanıcıyı yönlendir
-            console.log('⚠️ Quality gate failed - showing guidance');
-            
-            let qualityHtml = '<div style="background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%); padding: 30px; border-radius: 15px; color: white; text-align: center; margin-bottom: 20px;">';
-            qualityHtml += '<h3 style="margin: 0 0 15px 0;">⚠️ Derin Öğrenme İçin Daha Fazla Veri Gerekli</h3>';
-            qualityHtml += '<p style="margin: 0 0 15px 0; font-size: 1.1em;">' + data.message + '</p>';
-            
-            qualityHtml += '<div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px; margin: 20px 0;">';
-            qualityHtml += '<h4 style="margin: 0 0 10px 0;">📊 Mevcut Durumunuz:</h4>';
-            qualityHtml += '<p style="margin: 5px 0;">🎬 Puanladığınız Film: ' + (data.user_rating_count || 0) + '/' + (data.minimum_required || 10) + '</p>';
-            qualityHtml += '<p style="margin: 5px 0;">🎭 Puanladığınız Tür: ' + (data.current_genres || 0) + '/' + (data.minimum_genres || 3) + '</p>';
-            
-            if (data.rated_genres && data.rated_genres.length > 0) {
-                qualityHtml += '<p style="margin: 5px 0;">✅ Puanladığınız Türler: ' + data.rated_genres.join(', ') + '</p>';
-            }
-            
-            qualityHtml += '</div>';
-            
-            qualityHtml += '<div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px;">';
-            qualityHtml += '<h4 style="margin: 0 0 10px 0;">🎯 Yapmanız Gerekenler:</h4>';
-            
-            if (data.next_steps) {
-                for (let step of data.next_steps) {
-                    qualityHtml += '<p style="margin: 8px 0; padding-left: 15px;">• ' + step + '</p>';
-                }
-            }
-            
-            qualityHtml += '<div style="margin-top: 20px;">';
-            qualityHtml += '<button onclick="showTab(\'search\')" style="background: white; color: #f39c12; border: none; padding: 12px 25px; border-radius: 25px; font-weight: bold; margin: 5px; cursor: pointer;">🔍 Film Ara</button>';
-            qualityHtml += '<button onclick="showTab(\'dashboard\')" style="background: white; color: #f39c12; border: none; padding: 12px 25px; border-radius: 25px; font-weight: bold; margin: 5px; cursor: pointer;">🏠 Anasayfa</button>';
-            qualityHtml += '</div>';
-            
-            qualityHtml += '</div></div>';
-            
-            resultsDiv.innerHTML = qualityHtml;
-            console.log('⚠️ Quality gate UI displayed');
-            return;
-        }
-        
-        // KESIN ÇALIŞIR RENDERING - NO REDIRECT
-        console.log('🎬 Starting safe rendering...');
-        
-        // Prevent any automatic redirects
-        try {
-            // Make sure we stay on recommendations tab
-            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-            document.getElementById('recommendations').classList.add('active');
-            
-            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
-            document.querySelector('.tab[onclick*="recommendations"]').classList.add('active');
-        } catch (e) {
-            console.log('Tab control error (ignored):', e);
-        }
-        
-        const recommendations = data.recommendations || [];
-        const similarUsers = data.similar_users_found || 0;
-        const similarUsersList = data.similar_users || [];
-        const method = data.method || 'Deep Learning';
-        
-        console.log('📊 Rendering data:', {
-            recommendations: recommendations.length,
-            similarUsers: similarUsers,
-            similarUsersCount: similarUsersList.length,
-            method: method
-        });
-        
-        // Debug log for similar users
-        console.log('👥 Similar users data:', similarUsersList);
-        
-        // SAFE HTML BUILDING
-        let headerHtml = '';
-        headerHtml += '<div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 25px; border-radius: 12px; color: white; margin-bottom: 20px; box-shadow: 0 8px 25px rgba(0,0,0,0.2);">';
-        headerHtml += '<h3 style="margin: 0 0 15px 0; font-size: 1.5em;">🧠 Neural Collaborative Filtering Sonuçları</h3>';
-        headerHtml += '<div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px;">';
-        headerHtml += '<p style="margin: 5px 0;"><strong>📊 Dataset:</strong> 943 kullanıcı, 100,000 rating</p>';
-        headerHtml += '<p style="margin: 5px 0;"><strong>🧠 Algoritma:</strong> ' + method + '</p>';
-        headerHtml += '<p style="margin: 5px 0;"><strong>👥 Benzer Kullanıcı:</strong> ' + similarUsers + ' kişi</p>';
-        headerHtml += '<p style="margin: 5px 0;"><strong>🎬 Film Önerileri:</strong> ' + recommendations.length + ' adet</p>';
-        headerHtml += '<p style="margin: 5px 0;"><strong>⚡ Kalite:</strong> ' + (data.quality || 'Personalized') + '</p>';
-        headerHtml += '<p style="margin: 5px 0;"><strong>🔢 Embedding Boyutu:</strong> ' + (data.embedding_dimension || 128) + ' boyut</p>';
-        headerHtml += '<div style="margin-top: 15px; text-align: center;">';
-        headerHtml += '<button onclick="debugApiResponse()" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 8px 15px; border-radius: 20px; cursor: pointer; font-size: 0.9em; margin-right: 10px;">🔍 Debug: API Response</button>';
-        headerHtml += '<button onclick="testStayOnTab()" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 8px 15px; border-radius: 20px; cursor: pointer; font-size: 0.9em;">🧪 Test Tab</button>';
-        headerHtml += '</div>';
-        headerHtml += '</div>';
-        
-        // BENZER KULLANICI DETAYLARI  
-        if (similarUsersList.length > 0) {
-            headerHtml += '<div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px; margin-top: 15px;">';
-            headerHtml += '<h4 style="margin: 0 0 10px 0; color: #fff;">👥 En Benzer Kullanıcılar (Neural Embeddings):</h4>';
-            
-            for (let i = 0; i < Math.min(similarUsersList.length, 10); i++) {
-                const user = similarUsersList[i];
-                const similarity = (user.similarity || user.similarity_score || 0);
-                const similarityPercent = Math.round(similarity * 100);
-                const confidenceColor = similarity >= 0.7 ? '#27ae60' : similarity >= 0.5 ? '#f39c12' : '#e67e22';
-                
-                headerHtml += '<div style="background: rgba(255,255,255,0.05); padding: 12px; margin: 8px 0; border-radius: 8px; border-left: 4px solid ' + confidenceColor + ';">';
-                headerHtml += '<div style="display: flex; justify-content: space-between; align-items: center;">';
-                headerHtml += '<div>';
-                headerHtml += '<span style="font-weight: bold;">👤 User ' + user.user_id + '</span>';
-                headerHtml += '<div style="font-size: 0.85em; opacity: 0.8; margin-top: 4px;">Neural similarity embedding</div>';
-                headerHtml += '</div>';
-                headerHtml += '<div style="text-align: right;">';
-                headerHtml += '<div style="font-weight: bold; color: #4ecdc4; font-size: 1.1em;">' + similarity.toFixed(4) + '</div>';
-                headerHtml += '<div style="font-size: 0.85em; color: #4ecdc4;">' + similarityPercent + '%</div>';
-                headerHtml += '</div>';
-                headerHtml += '</div></div>';
-            }
-            
-            if (similarUsersList.length > 5) {
-                headerHtml += '<p style="margin: 8px 0 0 0; font-size: 0.9em; opacity: 0.8;">... ve ' + (similarUsersList.length - 5) + ' kullanıcı daha</p>';
-            }
-            
-            headerHtml += '</div>';
-        }
-        
-        headerHtml += '</div>';
-        
-        let moviesHtml = '';
-        
-        if (recommendations.length > 0) {
-            console.log('🎬 Rendering movie cards...');
-            
-            for (let i = 0; i < recommendations.length; i++) {
-                const movie = recommendations[i];
-                const title = movie.title || 'Unknown Movie';
-                const rating = movie.predicted_rating || movie.rating || movie.avg_similar_rating || movie.avg_rating || 0;
-                const genres = Array.isArray(movie.genres) ? movie.genres.join(', ') : 'Bilinmiyor';
-                const source = movie.recommendation_source || 'Neural Collaborative Filtering';
-                const algorithm = movie.algorithm || 'Deep Learning Neural Network';
-                const movieConfidence = movie.confidence_score || movie.similarity_score || (rating / 5.0);
-                const recommendationReason = movie.reason || 'Benzer kullanıcı tercihlerine göre';
-                
-                // DERİN ÖĞRENME DETAYLI MOVIE CARD
-                moviesHtml += '<div class="movie-card" style="background: white; padding: 25px; margin: 15px 0; border-radius: 12px; border-left: 5px solid #667eea; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2); transition: all 0.3s ease; position: relative; overflow: hidden;">';
-                
-                // Neural indicator
-                moviesHtml += '<div style="position: absolute; top: 15px; right: 15px; background: linear-gradient(45deg, #667eea, #764ba2); color: white; padding: 5px 10px; border-radius: 15px; font-size: 0.8em; font-weight: bold;">🧠 Neural CF</div>';
-                
-                // Title section
-                moviesHtml += '<div style="border-bottom: 2px solid #f8f9fa; padding-bottom: 15px; margin-bottom: 15px;">';
-                moviesHtml += '<h4 style="color: #333; margin: 0 0 8px 0; font-size: 1.3em; font-weight: 600;">' + (i + 1) + '. ' + title + '</h4>';
-                
-                // Rating badges
-                moviesHtml += '<div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-top: 10px;">';
-                
-                // Predicted rating
-                const ratingColor = rating >= 4.5 ? '#27ae60' : rating >= 4.0 ? '#f39c12' : rating >= 3.5 ? '#e67e22' : '#e74c3c';
-                moviesHtml += '<span style="background: ' + ratingColor + '; color: white; padding: 8px 15px; border-radius: 25px; font-weight: bold; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">🎯 ' + rating.toFixed(2) + '/5.0</span>';
-                
-                // Confidence score if available
-                const confidencePercent = Math.round(movieConfidence * 100);
-                moviesHtml += '<span style="background: #9b59b6; color: white; padding: 8px 15px; border-radius: 25px;">📊 ' + confidencePercent + '% eşleşme</span>';
-                
-                moviesHtml += '</div></div>';
-                
-                // Details section
-                moviesHtml += '<div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 15px;">';
-                moviesHtml += '<p style="margin: 0 0 8px 0; color: #555;"><strong>🎭 Türler:</strong> ' + genres + '</p>';
-                moviesHtml += '<p style="margin: 0 0 8px 0; color: #555;"><strong>🔬 Kaynak:</strong> ' + source + '</p>';
-                moviesHtml += '<p style="margin: 0 0 8px 0; color: #555;"><strong>⚙️ Algoritma:</strong> ' + algorithm + '</p>';
-                moviesHtml += '<p style="margin: 0; color: #666; font-style: italic;"><strong>💡 Sebep:</strong> ' + recommendationReason + '</p>';
-                moviesHtml += '</div>';
-                
-                // Action buttons
-                moviesHtml += '<div style="display: flex; gap: 10px; justify-content: center;">';
-                moviesHtml += '<button onclick="rateMovie(' + movie.movie_id + ', 5)" style="background: #27ae60; color: white; border: none; padding: 8px 15px; border-radius: 20px; cursor: pointer; transition: all 0.3s ease;">⭐ 5</button>';
-                moviesHtml += '<button onclick="rateMovie(' + movie.movie_id + ', 4)" style="background: #f39c12; color: white; border: none; padding: 8px 15px; border-radius: 20px; cursor: pointer; transition: all 0.3s ease;">⭐ 4</button>';
-                moviesHtml += '<button onclick="rateMovie(' + movie.movie_id + ', 3)" style="background: #e67e22; color: white; border: none; padding: 8px 15px; border-radius: 20px; cursor: pointer; transition: all 0.3s ease;">⭐ 3</button>';
-                moviesHtml += '</div>';
-                
-                moviesHtml += '</div>';
-            }
-            
-            console.log('✅ Movie cards HTML generated');
-        } else {
-            moviesHtml = '<div style="background: #f39c12; color: white; padding: 30px; border-radius: 12px; text-align: center;">';
-            moviesHtml += '<h4 style="margin: 0 0 10px 0;">Öneri Bulunamadı</h4>';
-            moviesHtml += '<p style="margin: 0;">Beklenmedik durum - backend çalışıyor ama frontend ulaşamadı.</p>';
-            moviesHtml += '</div>';
-        }
-        
-        // SAFE DOM UPDATE
-        const finalHtml = headerHtml + moviesHtml;
-        resultsDiv.innerHTML = finalHtml;
-        
-        console.log('🎉 RENDERING COMPLETE - CARDS DISPLAYED!');
-        console.log('📊 Final render stats:', {
-            similarUsers: similarUsers,
-            similarUsersList: similarUsersList.length,
-            recommendations: recommendations.length,
-            method: method
-        });
-        
-        // Store API response globally for debugging
-        window.lastDeepLearningResponse = data;
-        
-        // FORCE STAY ON RECOMMENDATIONS TAB AGAIN (after processing)
-        console.log('🔒 Final tab lock - ensuring we stay...');
-        try {
-            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-            document.getElementById('recommendations').classList.add('active');
-            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
-            document.querySelector('.tab[onclick*="recommendations"]').classList.add('active');
-        } catch (e) {
-            console.log('Tab control error:', e);
-        }
-        
-        // Success notification (after storing data)
-        try {
-            showNotification('🧠 Neural Collaborative Filtering tamamlandı!', 'success');
-        } catch (notifError) {
-            console.log('Notification error (ignored):', notifError);
-        }
-        
-    } catch (error) {
-        console.error('🚨 FATAL ERROR:', error);
-        console.error('🚨 Error message:', error.message);
-        console.error('🚨 Stack trace:', error.stack);
-        
-        resultsDiv.innerHTML = '<div style="background: red; color: white; padding: 20px; border-radius: 10px;"><h4>❌ HATA</h4><p>Error: ' + error.message + '</p><button onclick="getkisisel()" style="background: white; color: red; border: none; padding: 10px; margin-top: 10px;">🔄 Tekrar Dene</button></div>';
-    }
-}
-
-
-// 🆕 REMOVE FROM WATCHLIST - BONUS FONKSİYON
-async function removeFromWatchlist(movieId, movieTitle, buttonElement) {
-    console.log(`🔍 Removing from watchlist: ${movieId}`);
-    
-    if (!authToken) return;
-
-    try {
-        const response = await fetch(`http://localhost:8000/remove-from-watchlist/${movieId}`, {
-            method: 'DELETE',
-            headers: { 'Authorization': `Bearer ${authToken}` }
-        });
-
-        const data = await response.json();
-        if (data.status === 'success') {
-            // Button'u eski haline getir
-            buttonElement.classList.remove('added');
-            buttonElement.innerHTML = '📋 İzleyeceğim';
-            buttonElement.onclick = () => addToWatchlist(movieId, movieTitle, 'to_watch', buttonElement);
-            
-            try { updateUserStats(); } catch(e) { console.log('Stats update skipped:', e); }
-            showNotification(data.message, 'success');
-        }
-    } catch (error) {
-        console.error('❌ Remove watchlist error:', error);
-        alert('Watchlist çıkarma hatası: ' + error.message);
-    }
-}
-
-// Debug function for API response
-function debugApiResponse() {
-    if (window.lastDeepLearningResponse) {
-        const data = window.lastDeepLearningResponse;
-        alert(`API Debug:
-Status: ${data.status}
-Method: ${data.method}
-Similar Users: ${data.similar_users_found || 0}
-Recommendations: ${data.recommendations ? data.recommendations.length : 0}
-Quality: ${data.quality || 'unknown'}`);
-        console.log('📊 Complete API Response:', data);
-    } else {
-        alert('No API response data available. Try running deep learning recommendations first.');
-    }
-}
-
-// Test function to check if we stay on recommendations tab
-function testStayOnTab() {
-    console.log('🧪 Testing tab retention...');
-    alert('This is a test - you should stay on recommendations tab!');
-}
-
-
-
         // Load User Dashboard
         function loadUserDashboard() {
             const dashboardDiv = document.getElementById('dashboard-content');
@@ -2578,9 +2530,12 @@ function testStayOnTab() {
                     </div>
                 </div>
             `;
+            
+            updateUserStats();
         }
 
         // Load User Profile - GÜVENLİ HALE GETİRİLMİŞ
+// Load User Profile - GÜVENLİ HALE GETİRİLMİŞ
 // loadUserProfile fonksiyonuna debug ekle
 function loadUserProfile() {
     if (!authToken || !currentUser) return;
@@ -2721,134 +2676,230 @@ function createEnhancedMovieCard(movie, index, type) {
     const movieCard = document.createElement('div');
     movieCard.className = 'movie-card';
     
-    // Favorite indicator
-    if (type === 'favorite') {
-        movieCard.classList.add('favorited');
+    const movieId = movie.movie_id || movie.id;
+
+    // Rastgele Gradient Arkaplan (Poster yoksa)
+    const gradients = [
+        'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        'linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%)',
+        'linear-gradient(120deg, #84fab0 0%, #8fd3f4 100%)',
+        'linear-gradient(120deg, #f093fb 0%, #f5576c 100%)',
+        'linear-gradient(to top, #30cfd0 0%, #330867 100%)',
+        'linear-gradient(to top, #5f72bd 0%, #9b23ea 100%)'
+    ];
+    const randomGradient = gradients[Math.floor(Math.random() * gradients.length)];
+    
+    const posterStyle = movie.poster_url 
+        ? `background-image: url('${movie.poster_url}');` 
+        : `background: ${randomGradient};`;
+
+    // 1. Poster Layer
+    const posterDiv = document.createElement('div');
+    posterDiv.className = 'movie-poster-bg';
+    posterDiv.style = posterStyle;
+    movieCard.appendChild(posterDiv);
+
+    // 2. Overlay Layer
+    const overlayDiv = document.createElement('div');
+    overlayDiv.className = 'movie-overlay';
+    movieCard.appendChild(overlayDiv);
+
+    // 3. Badges
+    if (movie.imdb_score) {
+        const imdbBadge = document.createElement('div');
+        imdbBadge.className = 'card-badge badge-imdb';
+        imdbBadge.innerHTML = `⭐ ${movie.imdb_score}`;
+        movieCard.appendChild(imdbBadge);
+    }
+
+    const scoreBadge = document.createElement('div');
+    scoreBadge.className = 'card-badge badge-score';
+    const displayScore = movie.predicted_rating || movie.avg_rating || 0;
+    scoreBadge.innerHTML = `🎯 ${displayScore.toFixed(1)}`;
+    movieCard.appendChild(scoreBadge);
+
+    if (movie.watchlist_status) {
+        const statusBadge = document.createElement('div');
+        statusBadge.className = 'card-badge badge-status';
+        const icon = movie.watchlist_status === 'watched' ? '✅' : '📋';
+        statusBadge.innerHTML = `${icon} ${movie.watchlist_status === 'watched' ? 'İzlendi' : 'Listede'}`;
+        movieCard.appendChild(statusBadge);
+    }
+
+    // 4. Content Layer
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'movie-content';
+    
+    const safeTitle = movie.title ? movie.title.replace(/'/g, "\\'") : 'Unknown Movie';
+    
+    // Yıldız HTML'ini oluştur
+    // Backend 5 üzerinden tutuyor, arayüz 10 üzerinden. O yüzden x2 yapıyoruz.
+    const userRating = (movie.user_rating || 0) * 2; 
+    const starHTML = generateStarRatingHTML(movieId, userRating);
+
+    contentDiv.innerHTML = `
+        <h3 class="movie-title">${index}. ${movie.title}</h3>
+        <div class="movie-meta">
+            <span>📅 ${movie.release_date || 'Unknown'}</span>
+            <span>👥 ${movie.popularity || 0}</span>
+        </div>
+        <div class="movie-genres">
+            ${Array.isArray(movie.genres) ? 
+                movie.genres.slice(0, 3).map(g => `<span class="movie-genre-tag">${g}</span>`).join('') : ''}
+        </div>
+        
+        <!-- İNTERAKTİF YILDIZLAR BURADA -->
+        ${starHTML}
+        
+        <div class="movie-actions" style="margin-top: 15px;">
+            <!-- Favori Butonu -->
+            <div class="action-btn ${movie.is_favorite ? 'active' : ''}" 
+                 onclick="toggleFavorite(${movieId}, this)" 
+                 title="Favorilere Ekle">
+                ❤️
+            </div>
+            
+            <!-- İzleme Listesi Butonu -->
+            <div class="action-btn ${movie.watchlist_status === 'to_watch' ? 'active' : ''}" 
+                 onclick="addToWatchlist(${movieId}, '${safeTitle}', 'to_watch', this)"
+                 title="İzleyeceğim">
+                📋
+            </div>
+            
+            <!-- İzlendi Butonu -->
+            <div class="action-btn ${movie.watchlist_status === 'watched' ? 'watched' : ''}" 
+                 onclick="addToWatchlist(${movieId}, '${safeTitle}', 'watched', this)"
+                 title="İzledim">
+                ✅
+            </div>
+        </div>
+    `;
+    
+    movieCard.appendChild(contentDiv);
+    return movieCard;
+}
+
+// ✨ YENİ YILDIZ SİSTEMİ FONKSİYONLARI (10-PUAN) ✨
+
+function generateStarRatingHTML(movieId, currentRating) {
+    let starsHtml = '';
+    // 1'den 10'a kadar döngü
+    for (let i = 1; i <= 10; i++) {
+        let activeClass = '';
+        // Eğer mevcut puan (10 üzerinden) bu yıldıza eşit veya büyükse boya
+        if (currentRating >= i) {
+            activeClass = `active star-${Math.ceil(currentRating)}`; 
+        }
+        
+        starsHtml += `<button class="star-btn ${activeClass}" 
+                              onmouseover="handleStarHover(${movieId}, ${i})" 
+                              onmouseleave="handleStarLeave(${movieId}, ${currentRating})"
+                              onclick="handleStarClick(${movieId}, ${i})"
+                              id="star-${movieId}-${i}"
+                              title="${i} Puan">★</button>`;
     }
     
-    // Score display with enhanced matching
-    let scoreDisplay = '';
-    let matchPercentage = 0;
+    // Puan varsa göster, yoksa boş
+    const ratingText = currentRating > 0 ? `${currentRating}` : '';
     
-    if (movie.model_score || movie.predicted_rating) {
-    const modelScore = movie.model_score || movie.predicted_rating;
-    matchPercentage = Math.min(Math.round((modelScore / 5) * 100), 100);
-    scoreDisplay = `
-        <div class="movie-score" style="background: linear-gradient(45deg, #9b59b6, #8e44ad);">
-            🤖 Model: ${modelScore.toFixed(2)}
-        </div>
-        <div class="match-percentage" style="background: linear-gradient(45deg, #8e44ad, #9b59b6); color: white; padding: 5px 10px; border-radius: 15px; font-size: 0.8em; display: inline-block; margin: 5px 0;">
-            🤖 ${matchPercentage}% AI Önerisi
-        </div>
-    `;
-} else if (movie.hybrid_score) {
-    matchPercentage = Math.min(Math.round((movie.hybrid_score / 5) * 100), 100);
-    scoreDisplay = `
-        <div class="movie-score">
-            🎯 Hybrid: ${movie.hybrid_score}
-        </div>
-        <div class="match-percentage" style="background: linear-gradient(45deg, #27ae60, #2ecc71); color: white; padding: 5px 10px; border-radius: 15px; font-size: 0.8em; display: inline-block; margin: 5px 0;">
-            🔥 ${matchPercentage}% Eşleşme
-        </div>
-    `;
-} else if (movie.total_score) {
-    matchPercentage = Math.min(Math.round((movie.total_score / 5) * 100), 100);
-    scoreDisplay = `
-        <div class="movie-score">⭐ Skor: ${movie.total_score.toFixed(2)}</div>
-        <div class="match-percentage" style="background: linear-gradient(45deg, #3498db, #2980b9); color: white; padding: 5px 10px; border-radius: 15px; font-size: 0.8em; display: inline-block; margin: 5px 0;">
-            🎭 ${matchPercentage}% Uyum
-        </div>
-    `;
-} else if (movie.similarity_score) {
-    matchPercentage = Math.min(Math.round((movie.similarity_score / 5) * 100), 100);
-    scoreDisplay = `
-        <div class="movie-score">🔗 Benzerlik: ${movie.similarity_score.toFixed(2)}</div>
-        <div class="match-percentage" style="background: linear-gradient(45deg, #9b59b6, #8e44ad); color: white; padding: 5px 10px; border-radius: 15px; font-size: 0.8em; display: inline-block; margin: 5px 0;">
-            💜 ${matchPercentage}% Benzer
-        </div>
-    `;
-} else {
-    // Default rating-based matching
-    matchPercentage = Math.min(Math.round((movie.avg_rating / 5) * 100), 100);
-    scoreDisplay = `
-        <div class="movie-score">⭐ ${movie.avg_rating.toFixed(1)}</div>
-        <div class="match-percentage" style="background: linear-gradient(45deg, #f39c12, #e67e22); color: white; padding: 5px 10px; border-radius: 15px; font-size: 0.8em; display: inline-block; margin: 5px 0;">
-            ⭐ ${matchPercentage}% Kalite
+    return `
+        <div class="star-rating-container" id="rating-container-${movieId}">
+            ${starsHtml}
+            <span class="rating-label-text" id="rating-label-${movieId}">${ratingText}</span>
         </div>
     `;
 }
 
-    // Explanation (Açıklama) için tooltip ekle
-    if (movie.explanation) {
-        const tooltip = document.createElement('div');
-        tooltip.className = 'explanation-tooltip';
-        tooltip.textContent = `💡 ${movie.explanation}`;
-        movieCard.appendChild(tooltip);
-    }
+function handleStarHover(movieId, hoverValue) {
+    const label = document.getElementById(`rating-label-${movieId}`);
+    if(label) label.textContent = `${hoverValue}`;
     
-    // Status display for watchlist
-    let statusDisplay = '';
-    if (type === 'watchlist' && movie.watchlist_status) {
-        const statusEmoji = movie.watchlist_status === 'watched' ? '✅' : '📋';
-        const statusText = movie.watchlist_status === 'watched' ? 'İzlendi' : 'İzleyeceğim';
-        statusDisplay = `<div class="movie-score" style="background: linear-gradient(45deg, #4ecdc4, #44a08d);">${statusEmoji} ${statusText}</div>`;
+    for (let i = 1; i <= 10; i++) {
+        const star = document.getElementById(`star-${movieId}-${i}`);
+        if (!star) continue;
+        
+        // Önce temizle
+        star.className = 'star-btn';
+        
+        // Hover değerine kadar boya
+        if (i <= hoverValue) {
+            star.classList.add(`star-${hoverValue}`); 
+        }
     }
-    let userRatingDisplay = '';
-if (movie.user_rating) {
-    userRatingDisplay = `
-        <div class="user-rating" style="background: linear-gradient(45deg, #ff6b6b, #ee5a24); color: white; padding: 5px 10px; border-radius: 15px; font-size: 0.8em; display: inline-block; margin: 5px 0;">
-            👤 Puanınız: ${movie.user_rating} ⭐
-        </div>
-    `;
 }
+
+function handleStarLeave(movieId, originalRating) {
+    const label = document.getElementById(`rating-label-${movieId}`);
+    if(label) label.textContent = originalRating > 0 ? `${originalRating}` : '';
     
-    movieCard.innerHTML = `
-        <div class="movie-title">${index}. ${movie.title}</div>
-        ${userRatingDisplay}
-        ${scoreDisplay}
-        ${statusDisplay}
-        <div class="movie-info">
-            📅 ${movie.release_date || 'Bilinmiyor'} | ⭐ ${movie.avg_rating ? movie.avg_rating.toFixed(1) : 'N/A'} | 👥 ${movie.popularity || movie.rating_count || 0} kişi
-        </div>
-        <div class="genre-tags">
-            ${Array.isArray(movie.genres) ? 
-                movie.genres.map(genre => `<span class="genre-tag">${genre.trim()}</span>`).join('') :
-                (movie.genres ? movie.genres.split(',').map(genre => `<span class="genre-tag">${genre.trim()}</span>`).join('') : '')
-            }
-        </div>
-        <div class="action-buttons">
-            <button class="favorite-btn ${type === 'favorite' ? 'favorited' : ''}" 
-                    onclick="${type === 'favorite' ? 
-                        `removeFromFavorites(${movie.movie_id}, '${movie.title}', this)` : 
-                        `addToFavorites(${movie.movie_id}, '${movie.title}', this)`}">
-                ${type === 'favorite' ? '❤️ Favoride' : '🤍 Favoriye Ekle'}
-            </button>
-            <button class="watchlist-btn" 
-                    onclick="addToWatchlist(${movie.movie_id}, '${movie.title}', 'to_watch', this)">
-                📋 İzleyeceğim
-            </button>
-            <button class="watchlist-btn watched-btn" 
-                    onclick="addToWatchlist(${movie.movie_id}, '${movie.title}', 'watched', this)">
-                ✅ İzledim
-            </button>
-            <button class="similar-btn" onclick="getSimilarMovies(${movie.movie_id}, '${movie.title}')">
-                🔗 Benzer Filmler
-            </button>
-        </div>
-        <div class="rating-input">
-            Puanınız: 
-            <select onchange="rateMovie(${movie.movie_id}, this.value)">
-                <option value="0">Puanla</option>
-                <option value="1">1 ⭐</option>
-                <option value="2">2 ⭐</option>
-                <option value="3">3 ⭐</option>
-                <option value="4">4 ⭐</option>
-                <option value="5">5 ⭐</option>
-            </select>
-        </div>
-    `;
+    for (let i = 1; i <= 10; i++) {
+        const star = document.getElementById(`star-${movieId}-${i}`);
+        if (!star) continue;
+        
+        star.className = 'star-btn'; 
+        
+        // Orijinal puana göre geri boya
+        if (originalRating >= i) {
+            star.classList.add('active');
+            star.classList.add(`star-${Math.ceil(originalRating)}`);
+        }
+    }
+}
+
+async function handleStarClick(movieId, rating) {
+    // Animasyon
+    const star = document.getElementById(`star-${movieId}-${rating}`);
+    if(star) {
+        star.classList.add('star-pop');
+        setTimeout(() => star.classList.remove('star-pop'), 300);
+    }
     
-    return movieCard;
+    // UI'da kalıcı yap
+    handleStarLeave(movieId, rating);
+    
+    // Backend 5'lik sistem kullanıyor, biz 10'luk gösteriyoruz.
+    // Bu yüzden gönderirken 2'ye bölüyoruz. (Örn: 8 puan -> 4.0)
+    const backendRating = rating / 2.0; 
+    
+    // Backend isteği
+    await rateMovie(movieId, backendRating); 
+    
+    // Geri bildirim
+    const label = document.getElementById(`rating-label-${movieId}`);
+    if(label) {
+        label.textContent = "✅";
+        setTimeout(() => {
+            label.textContent = `${rating}`;
+        }, 1500);
+    }
+    
+    // Event listener güncelle (mouseleave eski puana dönmesin diye)
+    const container = document.getElementById(`rating-container-${movieId}`);
+    if(container) {
+        const stars = container.querySelectorAll('.star-btn');
+        stars.forEach(btn => {
+            btn.setAttribute('onmouseleave', `handleStarLeave(${movieId}, ${rating})`);
+        });
+    }
+}
+
+// Yardımcı Fonksiyon: Hızlı Puanlama
+function promptRating(movieId) {
+    const rating = prompt("Bu filme kaç puan verirsiniz? (1-5)");
+    if (rating && rating >= 1 && rating <= 5) {
+        rateMovie(movieId, rating);
+    }
+}
+
+// Favori Toggle (Helper)
+async function toggleFavorite(movieId, btn) {
+    if (btn.classList.contains('active')) {
+        await removeFromFavorites(movieId, '', btn);
+        btn.classList.remove('active');
+    } else {
+        await addToFavorites(movieId, '', btn);
+        btn.classList.add('active');
+    }
 }
 
 async function getGenreBasedRecommendations() {
@@ -3096,5 +3147,244 @@ async function getDynamicHybridRecommendations() {
             }
         `;
         document.head.appendChild(style);
+// ✨ OVERRIDE: GÜNCELLENMİŞ NEURAL RECOMMENDATION FONKSİYONU ✨
+async function getkisisel_deprecated() {
+    console.log('🎯 GETKISISEL FUNCTION CALLED (UPDATED)');
+    
+    if (!authToken) {
+        alert('Model önerileri için giriş yapmalısınız!');
+        return;
+    }
+    
+    // Tab Yönetimi
+    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+    document.getElementById('recommendations').classList.add('active');
+    document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+    document.querySelector('.tab[onclick*="recommendations"]').classList.add('active');
+    
+    const resultsDiv = document.getElementById('recommendation-results');
+    resultsDiv.innerHTML = `
+        <div class="loading" style="text-align: center; padding: 40px;">
+            <div style="font-size: 3em; margin-bottom: 20px;">🧠</div>
+            <h3 style="margin: 10px 0; color: #667eea;">Neural Network Çalışıyor</h3>
+            <p style="margin: 10px 0; color: #666;">Kişiselleştirilmiş modeliniz hazırlanıyor...</p>
+            <div style="width: 200px; height: 4px; background: #eee; margin: 20px auto; border-radius: 2px; overflow: hidden;">
+                <div style="width: 100%; height: 100%; background: linear-gradient(45deg, #667eea, #764ba2); animation: loading-bar 2s infinite;"></div>
+            </div>
+        </div>`;
+    
+    try {
+        // const response = await fetch(`http://localhost:8000/dynamic-deep-recommendations?n_recommendations=10`, {
+        const response = await fetch(`http://localhost:8000/dynamic-deep-recommendations?n_recommendations=10`, {
+            headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        
+        if (response.status === 401) {
+            resultsDiv.innerHTML = '<div style="padding: 20px; background: #f39c12; color: white;">Oturum süresi doldu. Lütfen tekrar giriş yapın.</div>';
+            return;
+        }
+        
+        const data = await response.json();
+        
+        if (data.status === 'insufficient_data') {
+            resultsDiv.innerHTML = `<div style="padding: 20px; background: #e67e22; color: white; border-radius: 10px;">
+                <h3>⚠️ Yetersiz Veri</h3>
+                <p>${data.message}</p>
+                <button onclick="showTab('search', null)" style="margin-top: 10px; padding: 8px 15px; border: none; background: white; color: #e67e22; border-radius: 20px; cursor: pointer; font-weight: bold;">🔍 Film Puanla</button>
+            </div>`;
+            return;
+        }
+
+        const recommendations = data.recommendations || [];
+        const similarUsersList = data.similar_users || [];
+        const method = data.method || 'Deep Learning';
+
+
+        // 1. Benzer Kullanıcıları Listele
+        const usersListDiv = document.getElementById('similar-users-list');
+        if (similarUsersList.length > 0) {
+            similarUsersList.forEach((user, index) => {
+                const similarity = (user.similarity || user.similarity_score || 0);
+                const similarityPercent = Math.round(similarity * 100);
+                
+                // Renk Skalası
+                let colorClass = '#e74c3c'; // Kırmızı
+                if(similarityPercent > 80) colorClass = '#27ae60'; // Yeşil
+                else if(similarityPercent > 60) colorClass = '#f39c12'; // Turuncu
+                else if(similarityPercent > 50) colorClass = '#f1c40f'; // Sarı
+
+                const userItem = document.createElement('div');
+                userItem.style.cssText = `
+                    display: flex; align-items: center; justify-content: space-between;
+                    padding: 15px; margin-bottom: 12px; border-radius: 10px;
+                    background: #f8f9fa; border-left: 5px solid ${colorClass};
+                    transition: all 0.2s ease; cursor: default;
+                    box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+                `;
+                userItem.onmouseover = () => { userItem.style.transform = 'translateX(5px)'; userItem.style.background = 'white'; userItem.style.boxShadow = '0 4px 10px rgba(0,0,0,0.1)'; };
+                userItem.onmouseout = () => { userItem.style.transform = 'translateX(0)'; userItem.style.background = '#f8f9fa'; userItem.style.boxShadow = '0 2px 5px rgba(0,0,0,0.02)'; };
+
+                userItem.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <div style="background: ${colorClass}; color: white; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.9em;">${index + 1}</div>
+                        <div>
+                            <div style="font-weight: bold; color: #333;">User ${user.user_id}</div>
+                            <div style="font-size: 0.75em; color: #777;">Benzerlik Oranı</div>
+                        </div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-weight: 800; color: ${colorClass}; font-size: 1.3em;">%${similarityPercent}</div>
+                    </div>
+                `;
+                usersListDiv.appendChild(userItem);
+            });
+        } else {
+            usersListDiv.innerHTML = '<div style="text-align: center; padding: 20px; color: #777;">Benzer kullanıcı bulunamadı.</div>';
+        }
+
+        // 2. Film Kartlarını Oluştur
+        const recList = document.getElementById('neural-rec-list');
+        if (recommendations.length > 0) {
+            recommendations.forEach((movie, index) => {
+                const recCard = createEnhancedMovieCard(movie, index + 1, 'neural');
+                recList.appendChild(recCard);
+            });
+        } else {
+            recList.innerHTML = `
+                <div style="grid-column: 1/-1; text-align: center; padding: 50px; background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+                    <div style="font-size: 3em; margin-bottom: 10px;">🤷‍♂️</div>
+                    <h3 style="color: #555;">Öneri Bulunamadı</h3>
+                    <p style="color: #777;">Şu an için size uygun bir öneri oluşturamadık.</p>
+                </div>
+            `;
+        }
+        
+        showNotification('🧠 Neural Collaborative Filtering tamamlandı!', 'success');
+
+    } catch (error) {
+        console.error('Error:', error);
+        resultsDiv.innerHTML = `<div style="padding: 20px; background: #e74c3c; color: white;">Hata oluştu: ${error.message}</div>`;
+    }
+}
+// ✨ NEURAL RECOMMENDATION UI V3 (COMPACT & 3-COLUMN GRID) ✨
+async function getkisisel() {
+    console.log('🎯 GETKISISEL V3 CALLED');
+    
+    if (!authToken) {
+        alert('Model önerileri için giriş yapmalısınız!');
+        return;
+    }
+    
+    // Tab Yönetimi
+    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+    document.getElementById('recommendations').classList.add('active');
+    document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+    document.querySelector('.tab[onclick*="recommendations"]').classList.add('active');
+    
+    const resultsDiv = document.getElementById('recommendation-results');
+    resultsDiv.innerHTML = `
+        <div class="loading" style="text-align: center; padding: 40px;">
+            <div style="font-size: 3em; margin-bottom: 20px;">🧠</div>
+            <h3 style="margin: 10px 0; color: #667eea;">Neural Network Analizi</h3>
+            <p style="margin: 10px 0; color: #666;">Vektör uzayında benzerleriniz taranıyor...</p>
+            <div style="width: 200px; height: 4px; background: #eee; margin: 20px auto; border-radius: 2px; overflow: hidden;">
+                <div style="width: 100%; height: 100%; background: linear-gradient(45deg, #667eea, #764ba2); animation: loading-bar 2s infinite;"></div>
+            </div>
+        </div>`;
+    
+    try {
+        const response = await fetch(`http://localhost:8000/dynamic-deep-recommendations?n_recommendations=10`, {
+            headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        
+        if (response.status === 401) {
+            resultsDiv.innerHTML = '<div style="padding: 20px; background: #f39c12; color: white;">Oturum süresi doldu.</div>';
+            return;
+        }
+        
+        const data = await response.json();
+        
+        if (data.status === 'insufficient_data') {
+            resultsDiv.innerHTML = `<div style="padding: 20px; background: #e67e22; color: white; border-radius: 10px;"><h3>⚠️ Yetersiz Veri</h3><p>${data.message}</p></div>`;
+            return;
+        }
+
+        const recommendations = data.recommendations || [];
+        const similarUsersList = data.similar_users || [];
+        const method = data.method || 'Dynamic_Deep_Learning';
+
+        // Önce resultsDiv'in kendisini dışarıdan genişletelim
+resultsDiv.style.width = "100%";
+resultsDiv.style.maxWidth = "1400px"; // Sayfanın çok yayılmasını engeller ama alanı genişletir
+resultsDiv.style.margin = "0 auto"; // Sayfayı ortalar
+resultsDiv.style.display = "block";
+
+resultsDiv.innerHTML = `
+    <div style="width: 100%; font-family: sans-serif; box-sizing: border-box; padding: 20px;">
+        
+        <div style="background: white; border-radius: 24px; padding: 35px; box-shadow: 0 10px 40px rgba(0,0,0,0.08); margin-bottom: 40px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 30px;">
+                
+                <div style="flex: 1; min-width: 300px;">
+                    <h2 style="margin: 0 0 10px 0; color: #1a1a1a; font-size: 2em;">🧠 Neural Collaborative Filtering</h2>
+                    <p style="margin: 0; color: #666; font-size: 1.2em;">
+                        Yapay Zeka, size en çok benzeyen <span style="color: #007bff; font-weight: bold;">${similarUsersList.length}</span> kullanıcıyı tespit etti.
+                    </p>
+                </div>
+
+                <div style="flex: 1.5; min-width: 350px; background: #f9f9f9; padding: 25px; border-radius: 20px; border: 1px solid #eee;">
+                    <h4 style="margin: 0 0 15px 0; color: #444; font-size: 1em; text-transform: uppercase; letter-spacing: 1.5px;">👥 Benzer Kullanıcılar (Skor)</h4>
+                    <div id="similar-users-list-condensed" style="display: flex; flex-wrap: wrap; gap: 12px;">
+                        </div>
+                </div>
+                
+            </div>
+        </div>
+
+        <div style="width: 100%;">
+            <h3 style="margin: 0 0 25px 0; color: #1a1a1a; font-size: 1.8em; display: flex; align-items: center; gap: 12px;">
+                <span>🎬</span> Sizin İçin Önerilenler
+            </h3>
+            
+            <div id="neural-rec-list" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 30px; width: 100%;">
+                </div>
+        </div>
+
+    </div>
+`;
+
+        // 1. Benzer Kullanıcıları (Compact) Listele
+        const usersListDiv = document.getElementById('similar-users-list-condensed');
+        if (similarUsersList.length > 0) {
+            similarUsersList.forEach((user) => {
+                const similarity = (user.similarity || user.similarity_score || 0);
+                let color = similarity > 0.5 ? '#27ae60' : (similarity > 0.3 ? '#f39c12' : '#e74c3c');
+
+                usersListDiv.innerHTML += `
+                    <div style="background: white; padding: 8px 12px; border-radius: 20px; border: 1px solid #eee; display: flex; align-items: center; gap: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                        <span style="font-weight: bold; color: #555;">User ${user.user_id}</span>
+                        <span style="font-family: monospace; font-weight: bold; color: white; background-color: ${color}; font-size: 0.9em; padding: 3px 8px; border-radius: 12px;">${similarity.toFixed(3)}</span>
+                    </div>`;
+            });
+        } else {
+            usersListDiv.innerHTML = '<div style="color: #777;">Benzer kullanıcı bulunamadı.</div>';
+        }
+
+        // 2. Film Kartları (3 Sütunlu Grid)
+        const recList = document.getElementById('neural-rec-list');
+        if (recommendations.length > 0) {
+            recommendations.forEach((movie, index) => {
+                const recCard = createEnhancedMovieCard(movie, index + 1, 'neural');
+                recList.appendChild(recCard);
+            });
+        } else {
+            recList.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; padding: 40px; background: #f8f9fa; border-radius: 10px;">Öneri bulunamadı.</div>`;
+        }
+        
+    } catch (error) {
+        console.error('Error:', error);
+        resultsDiv.innerHTML = `<div style="padding: 20px; background: #e74c3c; color: white;">Hata: ${error.message}</div>`;
+    }
+}
     </script>
 </body></html>

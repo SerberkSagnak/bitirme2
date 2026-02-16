@@ -5,7 +5,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel, EmailStr, validator
 from typing import Any, List, Dict, Optional, Union
 from sqlalchemy.orm import Session
-from sqlalchemy import desc, text, func
+from sqlalchemy import desc, text, func, or_
 import sqlite3
 import pandas as pd
 import numpy as np
@@ -97,6 +97,7 @@ class SimpleMovie:
         self.title = row[1] if len(row) > 1 else None
         self.genres = row[2] if len(row) > 2 else None
         self.avg_rating = row[3] if len(row) > 3 else None
+        self.imdb_score = row[4] if len(row) > 4 else 0.0 # ← Yeni eklendi
 
 class SimpleUser:
     def __init__(self, row):
@@ -145,6 +146,9 @@ class Movie(Base):
     rating_count = Column(Integer)
     release_date = Column(String)
     imdb_url = Column(String)
+    imdb_score = Column(Float, default=0.0)
+    poster_url = Column(String) # ← Yeni eklendi
+    genres = Column(String)  # Virgülle ayrılmış türler
 
 class UserInteraction(Base):
     __tablename__ = "user_interactions"
@@ -196,21 +200,29 @@ import os
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 try:
-    from dynamic_deep_recommender import DynamicDeepRecommender
+    # Eski problemli modül yerine temiz versiyonu kullanıyoruz
+    from clean_dynamic_deep_recommender import CleanDynamicDeepRecommender
     
-    # Global dynamic deep recommender instance
-    dynamic_deep_recommender = DynamicDeepRecommender(
+    # Global dynamic deep recommender instance - CLEAN VERSION
+    # Değişken adını aynı tutuyoruz ki kodun geri kalanı bozulmasın
+    dynamic_deep_recommender = CleanDynamicDeepRecommender(
         embedding_dim=128,
         n_similar_users=10,
-        model_path="dynamic_deep_model.h5",
-        embeddings_path="user_embeddings.pkl"
+        similarity_threshold=0.1
     )
     
-    print("[+] Dynamic Deep Recommender initialized successfully")
+    print("[+] Clean Dynamic Deep Recommender initialized successfully")
     
-    # Model eğitimi kontrolü (async olarak sonra yapılacak)
+    # Model eğitimi kontrolü
     if not os.path.exists("dynamic_deep_model.h5"):
         print("[*] Dynamic Deep Learning model needs training...")
+        # Başlangıçta eğitimi tetikleyebiliriz veya ilk istekte yapılmasını bekleyebiliriz
+        # Arka planda başlatmak en iyisi
+        import threading
+        training_thread = threading.Thread(target=dynamic_deep_recommender.train_model)
+        training_thread.daemon = True
+        training_thread.start()
+        print("[+] Background training started...")
         
 except Exception as e:
     print(f"[x] Dynamic Deep Recommender initialization failed: {e}")
@@ -220,7 +232,45 @@ except Exception as e:
 # [*] DEEP LEARNING MODEL SETUP
 # ===========================================================================
 import tensorflow as tf
+from tensorflow.keras.optimizers import Adam
 import pickle
+
+# --- Start of fix for quantization_config error ---
+from tensorflow.keras.layers import Embedding, Dense
+from tensorflow.keras.saving import deserialize_keras_object
+
+class FixedEmbedding(Embedding):
+    def __init__(self, **kwargs):
+        # Filter out 'quantization_config' if present
+        if 'quantization_config' in kwargs:
+            kwargs.pop('quantization_config')
+        super().__init__(**kwargs)
+
+class FixedDense(Dense):
+    def __init__(self, **kwargs):
+        # Filter out 'quantization_config' if present
+        if 'quantization_config' in kwargs:
+            kwargs.pop('quantization_config')
+        super().__init__(**kwargs)
+
+# Register the custom deserializer for Embedding
+def fixed_embedding_deserializer(config):
+    if 'quantization_config' in config:
+        config.pop('quantization_config')
+    return FixedEmbedding.from_config(config)
+
+tf.keras.utils.register_keras_serializable(package="FixedEmbedding")(FixedEmbedding)
+tf.keras.utils.register_keras_serializable(package="FixedEmbedding", name="Embedding")(fixed_embedding_deserializer)
+
+# Register the custom deserializer for Dense
+def fixed_dense_deserializer(config):
+    if 'quantization_config' in config:
+        config.pop('quantization_config')
+    return FixedDense.from_config(config)
+
+tf.keras.utils.register_keras_serializable(package="FixedDense")(FixedDense)
+tf.keras.utils.register_keras_serializable(package="FixedDense", name="Dense")(fixed_dense_deserializer)
+# --- End of fix ---
 
 dl_model = None
 dl_user_to_idx = None
@@ -229,12 +279,23 @@ dl_idx_to_user = None
 dl_idx_to_movie = None
 
 try:
+    print(f"[+] TensorFlow version: {tf.__version__}")
     # Fix: Provide the 'mse' function explicitly during model loading
     # This is required for newer TensorFlow versions to load older models.
     dl_model = tf.keras.models.load_model(
         'dl_model.h5',
-        custom_objects={'mse': 'mean_squared_error'}
+        custom_objects={
+            'mse': 'mean_squared_error',
+            'Embedding': FixedEmbedding, # Use the fixed embedding layer
+            'Dense': FixedDense # Use the fixed dense layer
+        }
     )
+
+    
+    
+    # Re-compile the model with its original optimizer and loss to restore its state
+    dl_model.compile(optimizer=Adam(0.001), loss='mean_squared_error')
+
     with open('dl_model_mappings.pkl', 'rb') as f:
         mappings = pickle.load(f)
         dl_user_to_idx = mappings['user_to_idx']
@@ -395,7 +456,9 @@ def create_access_token(data: dict):
 
 # app_enhanced_v6.py'nin en başına ekle:
 import warnings
+
 warnings.filterwarnings("ignore", category=DeprecationWarning)
+warnings.filterwarnings("ignore", message=".*np.object.*", category=FutureWarning) # Suppress np.object warning
 logging.getLogger("pydantic").setLevel(logging.ERROR)
 
 # [+] DATABASE SETUP
@@ -471,6 +534,33 @@ async def get_current_user_dependency(credentials: HTTPAuthorizationCredentials 
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token has expired")
     except jwt.PyJWTError:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials")
+
+async def get_admin_user(current_user: dict = Depends(get_current_user_dependency)) -> dict:
+    """Dependency to ensure the user is an admin."""
+    if current_user.get("username") != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin access required"
+        )
+    return current_user
+
+class NewMovie(BaseModel):
+    title: str
+    genres: str
+    release_date: Optional[str] = None
+    imdb_url: Optional[str] = None
+
+class MovieInfo(BaseModel):
+    id: int
+    title: str
+    genres: Optional[str] = None
+
+    class Config:
+        orm_mode = True
+
+class MovieList(BaseModel):
+    movies: List[MovieInfo]
+
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -680,6 +770,7 @@ class MovieResponse(BaseModel):
     watchlist_status: Optional[str] = None
     is_favorite: bool = False
     imdb_url: Optional[str] = None
+    imdb_score: Optional[float] = 0.0 # ← Yeni eklendi
 
 class RatingResponse(BaseModel):
     status: str
@@ -805,7 +896,7 @@ async def root():
     """🏠 Ana sayfa - Frontend HTML"""
     logger.info("[*] Ana sayfa erişimi")
     try:
-        with open("index.html", "r", encoding="utf-8") as f:
+        with open("bitirme2/index.html", "r", encoding="utf-8") as f:
             html_content = f.read()
         return HTMLResponse(content=html_content)
     except FileNotFoundError:
@@ -989,46 +1080,71 @@ async def get_popular_movies(limit: int = 20, db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail="Popüler filmler alınırken hata oluştu")
 
 @app.get("/search")
-async def search_movies(q: str, limit: int = 20, db: Session = Depends(get_db)):
+async def search_movies(
+    q: Optional[str] = Query(None), 
+    genres: Optional[List[str]] = Query(None), # Çoklu seçim için List
+    min_rating: Optional[float] = 0.0, # Bu artık IMDb puanı
+    sort_by: str = "popularity",
+    limit: int = 20, 
+    db: Session = Depends(get_db)
+):
     try:
-        logger.info(f"[*] Search query: '{q}', limit: {limit}")
+        logger.info(f"[*] Live Search: q='{q}', genres={genres}, imdb>={min_rating}, sort='{sort_by}'")
         
-        if not q or len(q.strip()) < 1:  # Min 1 karakter yap
-            return {"status": "error", "message": "En az 1 karakter giriniz"}
+        # Base query
+        query = db.query(Movie)
         
-        search_term = f"%{q.strip()}%"
-        logger.info(f"[*] Search term: '{search_term}'")
+        # 1. Text Search (Varsa)
+        if q and len(q.strip()) > 0:
+            search_term = f"%{q.strip()}%"
+            query = query.filter(Movie.title.ilike(search_term))
+            
+        # 2. Multi-Genre Filter (OR Logic: Seçilenlerden HERHANGİ BİRİ varsa getir)
+        # İsterseniz AND (HEPSİ OLSUN) da yapılabilir ama genelde arama için OR daha esnektir.
+        if genres:
+            genre_conditions = [Movie.genres.ilike(f"%{genre}%") for genre in genres]
+            query = query.filter(or_(*genre_conditions))
+            
+        # 3. IMDb Score Filter
+        if min_rating > 0:
+            query = query.filter(Movie.imdb_score >= min_rating)
+            
+        # 4. Sorting
+        if sort_by == "newest":
+            # release_date format: "01-Jan-1995" -> Son 4 karakter yıl
+            # SQLite SUBSTR fonksiyonu kullanıyoruz
+            query = query.order_by(text("SUBSTR(release_date, -4) DESC"))
+        elif sort_by == "oldest":
+            query = query.order_by(text("SUBSTR(release_date, -4) ASC"))
+        elif sort_by == "rating":
+            query = query.order_by(desc(Movie.avg_rating))
+        elif sort_by == "imdb":
+            query = query.order_by(desc(Movie.imdb_score))
+        else: # popularity
+            query = query.order_by(desc(Movie.rating_count))
+            
+        # Execute
+        movies = query.limit(limit).all()
         
-        # Önce toplam film sayısını kontrol et
-        total_movies = db.query(Movie).count()
-        logger.info(f"[*] Total movies in DB: {total_movies}")
-        
-        # Basit arama yap
-        movies = db.query(Movie).filter(
-            Movie.title.ilike(search_term)
-        ).limit(limit).all()
-        
-        logger.info(f"[*] Found {len(movies)} movies")
-        
-        # İlk 3 filmi logla
-        for i, movie in enumerate(movies[:3]):
-            logger.info(f"Movie {i+1}: {movie.title}")
+        # Toplam sayıyı bulmak için limit olmadan count almak lazım ama performans için şimdilik atlıyoruz
+        # veya ayrı bir count query atılabilir.
         
         results = []
         for movie in movies:
             results.append({
                 "id": movie.id,
+                "movie_id": movie.id,  # Frontend uyumluluğu için eklendi
                 "title": movie.title,
                 "genres": movie.genres,
                 "avg_rating": float(movie.avg_rating) if movie.avg_rating else 0.0,
+                "imdb_score": float(movie.imdb_score) if hasattr(movie, 'imdb_score') and movie.imdb_score else 0.0,
+                "poster_url": getattr(movie, 'poster_url', None), # ← Eklendi
                 "rating_count": movie.rating_count or 0,
                 "release_date": getattr(movie, 'release_date', None)
             })
         
         return {
             "status": "success",
-            "query": q,
-            "total_movies_in_db": total_movies,
             "count": len(results),
             "results": results
         }
@@ -1119,10 +1235,17 @@ async def login(login_data: dict, db: Session = Depends(get_db)):
         user = db.query(User).filter(User.username == username).first()
         
         if not user:
+            logger.warning(f"Login failed: User '{username}' not found.")
             raise HTTPException(status_code=401, detail="Kullanıcı bulunamadı")
         
+        # --- Start Debugging ---
+        logger.info(f"User '{username}' found. Hashed password from DB: {user.hashed_password}")
+        is_password_correct = verify_password(password, user.hashed_password)
+        logger.info(f"Password verification result for '{username}': {is_password_correct}")
+        # --- End Debugging ---
+
         # Güvenli şifre doğrulama
-        if not verify_password(password, user.hashed_password):
+        if not is_password_correct:
             raise HTTPException(status_code=401, detail="Geçersiz şifre")
         
         user.last_active = datetime.utcnow()
@@ -1147,7 +1270,8 @@ async def login(login_data: dict, db: Session = Depends(get_db)):
             "age": getattr(user, 'age', None),
             "gender": getattr(user, 'gender', None),
             "favorite_genres": getattr(user, 'favorite_genres', None),  # ← EKLENDI
-            "created_at": getattr(user, 'created_at', None)
+            "created_at": getattr(user, 'created_at', None),
+            "role": "admin" if user.username == "admin" else "user"  # Add role for frontend
         }
         
         print(f"[+] Sending user data: {user_data}")
@@ -1173,6 +1297,30 @@ async def login(login_data: dict, db: Session = Depends(get_db)):
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail="Giriş işlemi sırasında hata oluştu")
+
+@app.on_event("startup")
+def create_admin_user_on_startup():
+    """Ensures the admin user exists on startup."""
+    db = SessionLocal()
+    try:
+        admin_user = db.query(User).filter(User.username == "admin").first()
+        if not admin_user:
+            logger.info("[*] Admin user not found, creating one...")
+            hashed_password = get_password_hash("admin")
+            new_admin = User(
+                username="admin",
+                email="admin@example.com",
+                hashed_password=hashed_password,
+                created_at=datetime.utcnow()
+            )
+            db.add(new_admin)
+            db.commit()
+            logger.info("[+] Admin user 'admin' with password 'admin' created.")
+        else:
+            logger.info("[*] Admin user already exists.")
+    finally:
+        db.close()
+
 
 
 
@@ -1218,6 +1366,8 @@ async def get_popular_recommendations(
                     "release_date": movie.release_date or "Bilinmiyor",
                     "popularity": movie.rating_count or 0,
                     "user_rating": user_rating,
+                    "imdb_score": movie.imdb_score or 0.0,
+                    "poster_url": getattr(movie, 'poster_url', None), # ← Eklendi
                     "popularity_score": round((movie.avg_rating or 0) * ((movie.rating_count or 0) / 100), 2),
                     "imdb_url": movie.imdb_url if movie.imdb_url else None
                 })
@@ -1364,6 +1514,11 @@ async def rate_movie(
                     dynamic_recommendations.append({
                         "movie_id": movie_detail.id,
                         "title": movie_detail.title,
+                        "genres": movie_detail.genres.split('|') if movie_detail.genres else [],
+                        "avg_rating": movie_detail.avg_rating,
+                        "imdb_score": getattr(movie_detail, 'imdb_score', 0.0),
+                        "poster_url": getattr(movie_detail, 'poster_url', None), # ← Eklendi
+                        "release_date": movie_detail.release_date
                     })
         
         # [⚡] FAST DEEP LEARNING CACHE UPDATE
@@ -1577,11 +1732,70 @@ async def get_admin_stats(
             "timestamp": datetime.now().isoformat()
         }
         
-    except HTTPException:
-        raise
     except Exception as e:
         logger.error(f"[x] Admin stats error: {e}")
         raise HTTPException(status_code=500, detail="Admin stats alınırken hata oluştu")
+
+# ============================================================================
+# [*] ADMIN PANEL ENDPOINTS
+# ============================================================================
+
+@app.get("/admin/panel", response_class=HTMLResponse)
+async def get_admin_panel():
+    """Serves the admin panel HTML page."""
+    try:
+        return FileResponse("bitirme2/admin_panel.html")
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail="Admin panel HTML not found.")
+
+@app.get("/admin/movies", response_model=MovieList)
+async def get_all_movies(
+    db: Session = Depends(get_db),
+    admin: dict = Depends(get_admin_user)
+):
+    """Fetches all movies from the database for the admin panel."""
+    movies = db.query(Movie).order_by(Movie.id.desc()).all()
+    return {"movies": movies}
+
+@app.post("/admin/movies/add")
+async def add_new_movie(
+    movie_data: NewMovie,
+    db: Session = Depends(get_db),
+    admin: dict = Depends(get_admin_user)
+):
+    """Adds a new movie to the database."""
+    new_movie = Movie(
+        title=movie_data.title,
+        genres=movie_data.genres,
+        release_date=movie_data.release_date,
+        imdb_url=movie_data.imdb_url,
+        avg_rating=0.0,
+        rating_count=0
+    )
+    db.add(new_movie)
+    db.commit()
+    db.refresh(new_movie)
+    return {"message": f"Movie '{new_movie.title}' added successfully.", "movie_id": new_movie.id}
+
+@app.delete("/admin/movies/{movie_id}")
+async def delete_movie(
+    movie_id: int,
+    db: Session = Depends(get_db),
+    admin: dict = Depends(get_admin_user)
+):
+    """Deletes a movie from the database."""
+    movie_to_delete = db.query(Movie).filter(Movie.id == movie_id).first()
+    if not movie_to_delete:
+        raise HTTPException(status_code=404, detail=f"Movie with ID {movie_id} not found.")
+    
+    # Also delete related interactions to maintain data integrity
+    db.query(UserInteraction).filter(UserInteraction.movie_id == movie_id).delete()
+    db.query(Rating).filter(Rating.movie_id == movie_id).delete()
+
+    db.delete(movie_to_delete)
+    db.commit()
+    return {"message": f"Movie '{movie_to_delete.title}' and all its associated ratings/interactions have been deleted."}
+
 
 # === BACKUP & MAINTENANCE ===
 @app.post("/admin/backup-database")
@@ -1770,6 +1984,8 @@ def get_my_favorites(db: Session = Depends(get_db), current_user: dict = Depends
                     "release_date": movie.release_date or "Bilinmiyor",
                     "popularity": movie.rating_count or 0,
                     "user_rating": user_rating,  # ← EKLENDI
+                    "imdb_score": getattr(movie, 'imdb_score', 0.0), # ← EKLENDI
+                    "poster_url": getattr(movie, 'poster_url', None), # ← EKLENDI
                     "imdb_url": movie.imdb_url if movie.imdb_url else None
                 })
         
@@ -2660,9 +2876,11 @@ async def get_model_recommendations(
                         'title': movie.title,
                         'genres': movie.genres.split('|') if movie.genres else ['Bilinmiyor'],
                         'avg_rating': float(movie.avg_rating) if movie.avg_rating else 0.0,
+                        'imdb_score': float(movie.imdb_score) if hasattr(movie, 'imdb_score') and movie.imdb_score else 0.0,
                         'popularity': 0,  # Default değer
                         'release_date': getattr(movie, 'release_date', 'Bilinmiyor'),
                         'imdb_url': getattr(movie, 'imdb_url', None),
+                        'poster_url': getattr(movie, 'poster_url', None), # ← Eklendi
                         'predicted_rating': rec['predicted_rating'],
                         'model_score': rec['predicted_rating'],
                         'recommendation_type': 'NMF_Collaborative_Filtering',
@@ -3376,6 +3594,8 @@ async def get_my_watchlist_debug(
                             "popularity": movie.rating_count or 0,
                             "user_rating": user_rating,  # ← USER RATING EKLENDI
                             "watchlist_status": item_status,  # ← STATUS EKLENDI
+                            "imdb_score": getattr(movie, 'imdb_score', 0.0), # ← EKLENDI
+                            "poster_url": getattr(movie, 'poster_url', None), # ← EKLENDI
                             "imdb_url": movie.imdb_url if movie.imdb_url else None,
                             "added_date": item.timestamp.isoformat() if item.timestamp else None
                         })
@@ -3869,7 +4089,7 @@ async def startup_event():
     # [+] YENİ MODEL YÜKLEMESİ
     try:
         if advanced_recommender:
-            advanced_recommender.load_model('kullanıcıoneri.pkl')
+            advanced_recommender.load_model('bitirme2/kullanicioneri.pkl')
             logger.info("[+] New Advanced Model loaded successfully!")
         else:
             logger.info("[!] Advanced recommender not available")
@@ -3950,6 +4170,8 @@ async def get_advanced_recommendations(
                 "title": movie.title,
                 "genres": movie.genres.split('|') if movie.genres else [],
                 "avg_rating": float(movie.avg_rating) if hasattr(movie, 'avg_rating') and movie.avg_rating else 7.5,
+                "imdb_score": float(movie.imdb_score) if hasattr(movie, 'imdb_score') and movie.imdb_score else 0.0,
+                "poster_url": getattr(movie, 'poster_url', None), # ← Eklendi
                 "rating_count": getattr(movie, 'rating_count', 1000),
                 "release_date": getattr(movie, 'release_date', "1990"),
                 "hybrid_score": 4.5,
@@ -4018,11 +4240,12 @@ async def get_genre_based_recommendations(
                 "movie_id": movie.id,
                 "title": movie.title,
                 "genres": movie.genres.split('|') if movie.genres else [],
-                "avg_rating": float(movie.avg_rating) if hasattr(movie, 'avg_rating') and movie.avg_rating else 7.0,
-                "rating_count": getattr(movie, 'rating_count', 800),
-                "release_date": getattr(movie, 'release_date', "1995"),
-                "total_score": 7.0,
-                "popularity": getattr(movie, 'rating_count', 800)
+                "avg_rating": float(movie.avg_rating) if hasattr(movie, 'avg_rating') and movie.avg_rating else 7.5,
+                "imdb_score": float(movie.imdb_score) if hasattr(movie, 'imdb_score') and movie.imdb_score else 0.0,
+                "rating_count": getattr(movie, 'rating_count', 1000),
+                "release_date": getattr(movie, 'release_date', "1990"),
+                "total_score": 4.5,
+                "popularity": getattr(movie, 'rating_count', 1000)
             }
             recommendations.append(movie_dict)
         
@@ -4093,11 +4316,12 @@ async def get_favorites_based_recommendations(
                 "movie_id": movie.id,
                 "title": movie.title,
                 "genres": movie.genres.split('|') if movie.genres else [],
-                "avg_rating": float(movie.avg_rating) if hasattr(movie, 'avg_rating') and movie.avg_rating else 8.0,
-                "rating_count": getattr(movie, 'rating_count', 1200),
-                "release_date": getattr(movie, 'release_date', "1992"),
-                "similarity_score": 4.2,
-                "popularity": getattr(movie, 'rating_count', 1200)
+                "avg_rating": float(movie.avg_rating) if hasattr(movie, 'avg_rating') and movie.avg_rating else 7.5,
+                "imdb_score": float(movie.imdb_score) if hasattr(movie, 'imdb_score') and movie.imdb_score else 0.0,
+                "rating_count": getattr(movie, 'rating_count', 1000),
+                "release_date": getattr(movie, 'release_date', "1990"),
+                "total_score": 4.5,
+                "popularity": getattr(movie, 'rating_count', 1000)
             }
             recommendations.append(movie_dict)
         
@@ -4413,6 +4637,8 @@ async def get_recs_based_on_similar_users(
                         "title": movie_details.title,
                         "genres": movie_details.genres.split('|') if movie_details.genres else [],
                         "avg_rating": float(movie_details.avg_rating) if movie_details.avg_rating else 0.0,
+                        "imdb_score": movie_details.imdb_score or 0.0,
+                        "poster_url": getattr(movie_details, 'poster_url', None), # ← Eklendi
                         "recommendation_score": float(recommendation_scores[movie_idx]),
                         "type": "user-similarity-based"
                     })
@@ -4463,6 +4689,8 @@ async def get_dl_recommendations(
                     "title": movie.title,
                     "genres": movie.genres.split('|') if movie.genres else [],
                     "avg_rating": movie.avg_rating,
+                    "imdb_score": movie.imdb_score or 0.0,
+                    "poster_url": getattr(movie, 'poster_url', None), # ← Eklendi
                     "reason": "Popular movie for new user"
                 } for movie in popular_movies
             ]
@@ -4512,6 +4740,8 @@ async def get_dl_recommendations(
                 "genres": movie.genres.split('|') if movie.genres else [],
                 "predicted_rating": float(predicted_rating),
                 "avg_rating": movie.avg_rating,
+                "imdb_score": movie.imdb_score or 0.0,
+                "poster_url": getattr(movie, 'poster_url', None), # ← Eklendi
                 "reason": "Recommended by Deep Learning Model"
             })
 
@@ -4551,6 +4781,41 @@ async def get_dynamic_deep_recommendations(
     try:
         user_id = current_user["user_id"]
         
+        # [🔒] KISITLAMALAR (HARD CONSTRAINTS)
+        
+        # 1. Kullanıcı Bilgilerini ve Türleri Kontrol Et
+        user = db.query(User).filter(User.id == user_id).first()
+        favorite_genres = []
+        if user and user.favorite_genres:
+            favorite_genres = [g.strip() for g in user.favorite_genres.split(',') if g.strip()]
+            
+        if len(favorite_genres) < 2:
+            return {
+                "status": "insufficient_data",
+                "message": f"❌ Yetersiz Veri: Lütfen profilinizden en az 2 favori tür seçin! (Şu an: {len(favorite_genres)})",
+                "missing_requirement": "genres",
+                "current_count": len(favorite_genres),
+                "required_count": 2,
+                "recommendations": []
+            }
+
+        # 2. Etkileşim Sayısını (Favori + Puan) Kontrol Et
+        interaction_count = db.query(UserInteraction).filter(
+            UserInteraction.user_id == user_id
+        ).count()
+        
+        if interaction_count < 10:
+            return {
+                "status": "insufficient_data",
+                "message": f"❌ Yetersiz Veri: Lütfen en az 10 film puanlayın veya favorileyin! (Şu an: {interaction_count})",
+                "missing_requirement": "interactions",
+                "current_count": interaction_count,
+                "required_count": 10,
+                "recommendations": []
+            }
+
+        # [✅] Kısıtlamalar Geçildi -> Model Çalışsın
+        
         # Model eğitilmemiş ise eğit
         if not os.path.exists("bitirme2/dynamic_deep_model.h5"):
             logger.info("[*] Training Dynamic Deep Learning model...")
@@ -4579,6 +4844,8 @@ async def get_dynamic_deep_recommendations(
                     "movie_id": movie.id,
                     "title": movie.title,
                     "genres": movie.genres.split('|') if movie.genres else [],
+                    "imdb_score": movie.imdb_score or 0.0,
+                    "poster_url": getattr(movie, 'poster_url', None), # ← Eklendi
                     "predicted_rating": float(movie.avg_rating),
                     "similar_users_count": 0,
                     "recommendation_source": "popular_fallback",
@@ -4595,11 +4862,43 @@ async def get_dynamic_deep_recommendations(
             }
         
         # Benzer kullanıcılardan öneriler al
-        recommendations = dynamic_deep_recommender.get_recommendations_from_similar_users(
+        recommendations = dynamic_deep_recommender.get_recommendations(
             user_id, 
             n_recommendations
         )
         
+        # [✨] ZENGİNLEŞTİRME: Favori ve Watchlist Durumlarını Ekle
+        import json
+        for rec in recommendations:
+            movie_id = rec['movie_id']
+            
+            # 1. Favori Kontrolü
+            is_favorite = db.query(UserInteraction).filter(
+                UserInteraction.user_id == user_id,
+                UserInteraction.movie_id == movie_id,
+                UserInteraction.interaction_type == "favorite"
+            ).first() is not None
+            rec['is_favorite'] = is_favorite
+            
+            # 2. Watchlist Kontrolü
+            watchlist_item = db.query(UserInteraction).filter(
+                UserInteraction.user_id == user_id,
+                UserInteraction.movie_id == movie_id,
+                UserInteraction.interaction_type == "watchlist"
+            ).first()
+            
+            if watchlist_item and watchlist_item.extra_data:
+                try:
+                    wl_data = json.loads(watchlist_item.extra_data)
+                    rec['watchlist_status'] = wl_data.get('status', 'to_watch')
+                except:
+                    rec['watchlist_status'] = 'to_watch'
+            else:
+                rec['watchlist_status'] = None
+                
+            # 3. User Rating Kontrolü
+            rec['user_rating'] = get_user_rating_for_movie(db, user_id, movie_id)
+
         return {
             "status": "success",
             "method": "Dynamic_Deep_Learning",
@@ -4769,9 +5068,10 @@ async def update_user_preferences_dynamic(
         
         # Derin öğrenme embeddingini güncelle
         if saved_ratings:
-            dynamic_deep_recommender.update_user_embedding(user_id, ratings)
+            # dynamic_deep_recommender.update_user_embedding(user_id, ratings) # Clean versiyonda bu metod yok
+            logger.info(f"[+] Updated embeddings logic skipped for clean version (will be updated on next retrain)")
             
-            logger.info(f"[+] Updated embeddings for user {user_id} with {len(saved_ratings)} new ratings")
+            logger.info(f"[+] Updated preferences for user {user_id} with {len(saved_ratings)} new ratings")
         
         return {
             "status": "success",
@@ -4834,6 +5134,17 @@ async def retrain_dynamic_model(
         "timestamp": datetime.now().isoformat()
     }
 
+    # Startup Event: Train Model on Launch
+    @app.on_event("startup")
+    async def startup_event():
+        if dynamic_deep_recommender:
+            logger.info("[*] Startup: Training Dynamic Deep Learning model with new features (Genre + IMDb)...")
+            try:
+                # Arka planda eğitim başlat
+                asyncio.create_task(asyncio.to_thread(dynamic_deep_recommender.train_model, retrain=True))
+            except Exception as e:
+                logger.error(f"[x] Startup training failed: {e}")
+
 # === MAIN EXECUTION ===
 if __name__ == "__main__":
     import uvicorn
@@ -4870,6 +5181,6 @@ if __name__ == "__main__":
         "app_enhanced_v6:app",
         host="0.0.0.0",
         port=8000,
-        reload=False,  # Reload kapatıldı - stable run
+        reload=True,  # Reload AÇILDI - Geliştirme modu
         log_level="info"
     )

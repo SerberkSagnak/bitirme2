@@ -483,6 +483,15 @@
             if (savedToken && savedUser) {
                 authToken = savedToken;
                 currentUser = JSON.parse(savedUser);
+                
+                // 🔥 GÜVENLİK KONTROL - favorite_genres parse et
+                if (currentUser && typeof currentUser.favorite_genres === 'string') {
+                    currentUser.favorite_genres = currentUser.favorite_genres.split(',').filter(g => g.trim());
+                }
+                if (currentUser && !Array.isArray(currentUser.favorite_genres)) {
+                    currentUser.favorite_genres = [];
+                }
+                
                 updateUIForLoggedInUser();
             }
             
@@ -514,6 +523,12 @@
             allGenres.forEach(genre => {
                 const genreItem = document.createElement('div');
                 genreItem.className = 'genre-item';
+                
+                // Check if selected
+                if (selectedGenres.includes(genre)) {
+                    genreItem.classList.add('selected');
+                }
+                
                 genreItem.textContent = genre;
                 genreItem.onclick = () => toggleGenre(genre, genreItem);
                 genreGrid.appendChild(genreItem);
@@ -616,6 +631,14 @@
                 if (data.status === 'success') {
                     authToken = data.access_token;
                     currentUser = data.user;
+                    
+                    // 🔥 GÜVENLİK KONTROL - favorite_genres parse et
+                    if (currentUser && typeof currentUser.favorite_genres === 'string') {
+                        currentUser.favorite_genres = currentUser.favorite_genres.split(',').filter(g => g.trim());
+                    }
+                    if (currentUser && !Array.isArray(currentUser.favorite_genres)) {
+                        currentUser.favorite_genres = [];
+                    }
                     
                     localStorage.setItem('authToken', authToken);
                     localStorage.setItem('currentUser', JSON.stringify(currentUser));

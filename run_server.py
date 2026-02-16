@@ -124,7 +124,7 @@ def start_server():
             "app_enhanced_v6:app",
             "--host", "0.0.0.0",
             "--port", "8000", 
-            "--reload"
+            "--reload"  # Auto-reload enabled
         ]
         
         print("[*] Starting server with command:")

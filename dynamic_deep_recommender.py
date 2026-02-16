@@ -315,6 +315,7 @@ class DynamicDeepRecommender:
             ui.movie_id,
             m.title,
             m.genres,
+            m.imdb_score,
             AVG(CAST(ui.interaction_data AS FLOAT)) as avg_similar_rating,
             COUNT(*) as rating_count,
             SUM(CASE WHEN CAST(ui.interaction_data AS FLOAT) >= 4.0 THEN 1 ELSE 0 END) as high_ratings
@@ -329,7 +330,7 @@ class DynamicDeepRecommender:
             WHERE user_id = ? 
             AND interaction_type = 'rating'
         )
-        GROUP BY ui.movie_id, m.title, m.genres
+        GROUP BY ui.movie_id, m.title, m.genres, m.imdb_score
         HAVING rating_count >= 2
         ORDER BY avg_similar_rating DESC, high_ratings DESC
         LIMIT ?
@@ -362,6 +363,7 @@ class DynamicDeepRecommender:
                 'movie_id': int(row['movie_id']),
                 'title': row['title'],
                 'genres': row['genres'].split('|') if row['genres'] else [],
+                'imdb_score': float(row['imdb_score']) if pd.notna(row['imdb_score']) else 0.0,
                 'predicted_rating': float(predicted_rating),
                 'similar_users_avg_rating': float(row['avg_similar_rating']),
                 'similar_users_count': int(row['rating_count']),
